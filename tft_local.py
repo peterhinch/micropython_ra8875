@@ -27,14 +27,26 @@
 
 import uasyncio as asyncio
 from machine import Pin, SPI
-from micropython_ra8875.ugui import Screen, TFT
+from micropython import const
 
-def setup():
+_WIDTH = const(480)  # Edit to match your display: 800*480 or 480*272
+_HEIGHT = const(272)
+_SPI = const(2)  # Edit to match connections
+_RESET = 'X4'
+_CS = 'X5'
+
+def setup(driver_test=False, use_async=True):
+    pinrst = Pin(_RESET, Pin.OUT, value=1)
+    pincs = Pin(_CS, Pin.OUT, value=1)
+    spi = SPI(_SPI, baudrate=6_000_000)
+    if driver_test:
+        from micropython_ra8875.driver.ra8875 import RA8875
+        loop = asyncio.get_event_loop() if use_async else None
+        return RA8875(spi, pincs, pinrst, _WIDTH, _HEIGHT, loop)
+
+    from micropython_ra8875.ugui import Screen, TFT
     loop = asyncio.get_event_loop()
-    pinrst = Pin('X4', Pin.OUT, value=1)
-    pincs = Pin('X5', Pin.OUT, value=1)
-    spi = SPI(2, baudrate=6_000_000)
-    tft = TFT(spi, pincs, pinrst, 480, 272, loop)
+    tft = TFT(spi, pincs, pinrst, _WIDTH, _HEIGHT, loop)
     # Touch panel calibration values xmin, ymin, xmax, ymax
     # values read from ra8875_test.py touching top left and bottom right corners
     # of displayable area (ideally with a stylus for accuracy)

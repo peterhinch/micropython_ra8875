@@ -26,10 +26,10 @@ import math
 import gc
 from micropython import const
 
-from micropython_ra8875.aswitch import Delay_ms
-from micropython_ra8875.asyn import Event
-from micropython_ra8875.ra8875 import RA8875
-from micropython_ra8875.constants import *
+from micropython_ra8875.support.aswitch import Delay_ms
+from micropython_ra8875.support.asyn import Event
+from micropython_ra8875.driver.ra8875 import RA8875
+from micropython_ra8875.support.constants import *
 
 TWOPI = 2 * math.pi
 gc.collect()
@@ -125,15 +125,12 @@ class TFT(RA8875):
     def _getcolor(self, color):
         if self._is_grey:
             color = self._greyfunc(color, self._factor)
-            #if self._desaturate:
-                #color = desaturate(color, self._factor)
-            #else:
-                #color = dim(color, self._factor)
         return color
 
     def desaturate(self, value=None):
-        if value is not None:
-            self._desaturate = value
+        if value is not None:  # Pass a bool to specify desat or dim
+            self._desaturate = value  # Save so it can be queried
+            # Specify the global function
             self._greyfunc = desaturate if value else dim
         return self._desaturate
 
@@ -151,28 +148,19 @@ class TFT(RA8875):
         super().draw_rectangle(x1, y1, x2, y2, self._getcolor(color))
 
     def fill_rectangle(self, x1, y1, x2, y2, color):
-        if self._is_grey:
-            super().fill_rectangle(x1, y1, x2, y2, self._getcolor(color))
-        else:
-            super().fill_rectangle(x1, y1, x2, y2, color)
+        super().fill_rectangle(x1, y1, x2, y2, self._getcolor(color))
 
     def draw_clipped_rectangle(self, x1, y1, x2, y2, color):
         super().draw_clipped_rectangle(x1, y1, x2, y2, self._getcolor(color))
 
     def fill_clipped_rectangle(self, x1, y1, x2, y2, color):
-        if self._is_grey:
-            super().fill_clipped_rectangle(x1, y1, x2, y2, self._getcolor(color))
-        else:
-            super().fill_clipped_rectangle(x1, y1, x2, y2, color)
+         super().fill_clipped_rectangle(x1, y1, x2, y2, self._getcolor(color))
 
     def draw_circle(self, x, y, radius, color):
         super().draw_circle(x, y, radius, self._getcolor(color))
 
     def fill_circle(self, x, y, radius, color):
-        if self._is_grey:
-            super().fill_circle(x, y, radius, self._getcolor(color))
-        else:
-            super().fill_circle(x, y, radius, color)
+        super().fill_circle(x, y, radius, self._getcolor(color))
 
     def draw_vline(self, x, y, l, color):
         super().draw_vline(x, y, l, self._getcolor(color))

@@ -23,18 +23,12 @@
 # THE SOFTWARE.
 import pyb
 import uasyncio as asyncio
-from micropython_ra8875.constants import *
+from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import HorizSlider, Button, ButtonList, Dial, Label, Meter, LED, Screen
 from micropython_ra8875.tft_local import setup
 
-try:
-    import font10  # Hopefully frozen bytecode
-except ImportError:
-    import micropython_ra8875.demos.font10 as font10
-try:
-    import font14  # Hopefully frozen bytecode
-except ImportError:
-    import micropython_ra8875.demos.font14 as font14
+import micropython_ra8875.support.font10 as font10
+import micropython_ra8875.support.font14 as font14
 
 # STANDARD BUTTONS
 

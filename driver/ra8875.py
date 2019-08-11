@@ -44,46 +44,70 @@ from micropython import const
 
 MAX_CHAR_WIDTH = const(100)
 
-# colors: the GUI uses an (r, g, b) tuple of bytes. Panel uses RGB565.
-# Convert tuple to little endian RGB565
-def to_rgb565(rgb):
-    r, g, b = rgb
-    return (r & 0xf8) | ((g & 0xe0) >> 5) | ((g & 0x1c) << 11) | ((b & 0xf8) << 5)
-
 # Copy a row of a glyph to a destination buffer. Each bit is output as a 16 bit
 # color value
 # r0 Pointer to source bytes
 # r1 Pointer to destination bytes
 # r2 Bit count (columns) << 16 | backgound color
 # r3 Color value (LS 16 bits RGB565 little endian)
-@micropython.asm_thumb
-def lcopy(r0, r1, r2, r3):
-    movw(r7, 0xffff)
-    and_(r7, r2)  # r7 = BG color
-    mov(r6, 16)
-    lsr(r2, r6)  # r2 = Bit count
-    mov(r5, 1)
-    add(r1, 3)  # Skip preamble 
-    label(BYTE)  # Next byte
-    mov(r6, 0x80)  # r6 == bit mask
-    ldrb(r4, [r0, 0])  # Current source byte
-    label(BIT)  # Next bit
-    tst(r4, r6)  # Test masked bit
-    ite(eq)
-    strh(r7, [r1, 0])  # Black
-    strh(r3, [r1, 0])  # Passed color
-    sub(r2, 1)
-    beq(DONE)
-    add(r1, 2)  # Next dest halfword
-    lsr(r6, r5)  # mask >>= 1
-    bne(BIT)
-    add(r0, 1)
-    b(BYTE)
-    label(DONE)
+# Viper version adds 3% to glyph rendering time compared to assembler.
+
+@micropython.viper
+def lcopy(ps : ptr8, pd : ptr8, bcbg : int, fgc : int):
+    bgc0 = bcbg & 0xff
+    bgc1 = (bcbg & 0xff00) >> 8
+    bc = bcbg >> 16  # bit count
+    fgc0 = fgc & 0xff
+    fgc1 = (fgc & 0xff00) >> 8
+    mask = 0x80
+    dp = 3  # Skip preamble
+    sp = 0
+    for bit in range(bc):
+        one = ps[sp] & mask
+        pd[dp] = fgc0 if one else bgc0
+        dp += 1
+        pd[dp] = fgc1 if one else bgc1
+        dp += 1
+        mask >>= 1
+        if not mask:
+            mask = 0x80
+            sp += 1
+
+#@micropython.asm_thumb
+#def lcopy(r0, r1, r2, r3):
+    #movw(r7, 0xffff)
+    #and_(r7, r2)  # r7 = BG color
+    #mov(r6, 16)
+    #lsr(r2, r6)  # r2 = Bit count
+    #mov(r5, 1)
+    #add(r1, 3)  # Skip preamble 
+    #label(BYTE)  # Next byte
+    #mov(r6, 0x80)  # r6 == bit mask
+    #ldrb(r4, [r0, 0])  # Current source byte
+    #label(BIT)  # Next bit
+    #tst(r4, r6)  # Test masked bit
+    #ite(eq)
+    #strh(r7, [r1, 0])  # Black
+    #strh(r3, [r1, 0])  # Passed color
+    #sub(r2, 1)
+    #beq(DONE)
+    #add(r1, 2)  # Next dest halfword
+    #lsr(r6, r5)  # mask >>= 1
+    #bne(BIT)
+    #add(r0, 1)
+    #b(BYTE)
+    #label(DONE)
 
 
 # SPI: Adafruit recommend 6MHz. Default polarity and phase (0)
 class RA8875:
+    # colors: the GUI uses an (r, g, b) tuple of bytes. Panel uses RGB565.
+    # Convert tuple to little endian RGB565
+    @staticmethod
+    def _to_rgb565(rgb):
+        r, g, b = rgb
+        return (r & 0xf8) | ((g & 0xe0) >> 5) | ((g & 0x1c) << 11) | ((b & 0xf8) << 5)
+
     def __init__(self, spi, pincs, pinrst, width, height, loop=None):
         if (width, height) not in ((800, 480), (480, 272)):
             raise ValueError('Supported sizes are 800x480 and 480x272')
@@ -108,8 +132,8 @@ class RA8875:
         self._yl = bytearray(b'\x80\x48\x00\x00')
         self._yh = bytearray(b'\x80\x49\x00\x00')
 
-        self.reset()  # Strictly display should be powered down until reset is done
-        self.set_pll(width, height)
+        self._reset()  # Strictly display should be powered down until reset is done
+        self._set_pll(width, height)
         self._write_reg(0x10, 0x0c)  # 16 bits/pixel 8 bit MCU
         self._init_panel(width, height)
         self._write_reg(0x01, 0x80)  # RA8875_PWRR_NORMAL | RA8875_PWRR_DISPON)
@@ -127,22 +151,23 @@ class RA8875:
         self._xcal = (self._width - 1) / (xmax - xmin)
         self._ycal = (self._height - 1) / (ymax - ymin)
 
-    def reset(self):
+    def _reset(self):
         self._pincs(1)
         self._pinrst(0)
         sleep_ms(2)
         self._pinrst(1)
         sleep_ms(20)
-        # Can't find this in datasheet but Adafruit check this in Arduino code.
-        # In my testing it returns 58 (0x3a)
+        # Can't find this in datasheet but Adafruit check for a value of 0x75
+        # in Arduino code. In my testing it returns 58 (0x3a)
         rv = self._read_reg(0)
-        if rv != 0x75:
+        if rv != 0x3a:
             print('REG[0] return value:', rv)
+            print('Possible hardware error. Please check wiring.')
             #raise RuntimeError('RA8875 not detected')
 
     # System clock: the crystal apperas to be 20MHz but the schematic is hard to read.
     # If so, the systam clock is 60MHz (value 0x0b) or 55MHz (value 0x0a)
-    def set_pll(self, width, height):
+    def _set_pll(self, width, height):
         self._write_reg(0x88, 0x0a if width == 480 else 0x0b)  # Application note suggests these values
         sleep_ms(1)
         self._write_reg(0x89, 2)
@@ -350,7 +375,6 @@ class RA8875:
             self._write_reg(0x4b, x >> 8)
             self._write_reg(0x4c, y & 0xff)
             self._write_reg(0x4d, y >> 8)
-#        self._write_reg(0x40, 0)  # RA8875_MWCR0 write direction - graphic mode
 
     # Draw single pixel
     def draw_pixel(self, x, y, rgb):  # OK
@@ -359,7 +383,7 @@ class RA8875:
         self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE
         self._pincs(1)
         self._pincs(0)
-        self._spi.write(b'\x00' + int.to_bytes(to_rgb565(rgb), 2, 'little'))  # MSB 1st
+        self._spi.write(b'\x00' + int.to_bytes(RA8875._to_rgb565(rgb), 2, 'little'))  # MSB 1st
         self._pincs(1)
 
     # Read back RGB565 value of a pixel.
@@ -390,8 +414,8 @@ class RA8875:
         # mv is a memoryview into a readonly (bytes) object.
         src = addressof(mv)
         offs = 0  # Offset into source
-        on = to_rgb565(fgcolor)  # Integer (16 bit half word)
-        cx = to_rgb565(bgcolor) | (cols << 16)
+        on = RA8875._to_rgb565(fgcolor)  # Integer (16 bit half word)
+        cx = RA8875._to_rgb565(bgcolor) | (cols << 16)
         xl = self._xl  # Cache the command buffers
         xh = self._xh
         yl = self._yl
@@ -402,6 +426,8 @@ class RA8875:
             # dest[0:3] holds b'\x80\x02\x00' RA8875_CMDWRITE, MRWC, RA8875_DATAWRITE
             # lcopy populates dest[3:] with color value for each pixel in row.
             lcopy(src + offs, dest, cx, on)
+            # The following requires firmware after 6th Aug 2019. It is slightly slower.
+            # lcopy(mv[offs:offs + gbytes], dest, cx, on)
             yl[3] = y & 0xff
             yh[3] = y >> 8
             self._pincs(0)
@@ -453,7 +479,7 @@ class RA8875:
 
     # This is unreliable: the chip does not return consistent data. Note that
     # https://github.com/sumotoy/RA8875/blob/0.70/RA8875.cpp has similar code
-    # commented out so I guess he found the same.
+    # commented out so I guess they found the same.
     #def save_region_buggy(self, mv, x1, y1, x2, y2):
         #bpr = 2 * (x2 - x1 + 1)  # Bytes per row (2 bytes/pixel)
         #rows = y2 - y1 + 1

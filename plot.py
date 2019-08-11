@@ -1,9 +1,12 @@
-# plot.py Graph plotting extension for Pybboard RA8875 GUI
+# STATE: populate can be genf (not bound method) or function.
+
+
+# lplot.py Graph plotting extension for Pybboard TFT GUI
 # Now clips out of range lines
 
 # The MIT License (MIT)
 #
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2017 Peter Hinch
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +29,12 @@
 from math import pi
 from cmath import rect
 from micropython import const
+from array import array
 
-from micropython_ra8875.ugui import NoTouch, dolittle, Screen
-from micropython_ra8875.constants import *
+from micropython_ra8875.ugui import NoTouch, Screen
+from micropython_ra8875.support.constants import *
+
+type_gen = type((lambda: (yield))())  # type of a generator
 
 # Line clipping outcode bits
 _TOP = const(1)
@@ -42,7 +48,7 @@ _YMAX = const(1)
 _YMIN = const(-1)
 
 
-class Curve(object):
+class Curve():
     @staticmethod
     def _outcode(x, y):
         oc = _TOP if y > 1 else 0
@@ -51,10 +57,14 @@ class Curve(object):
         oc |= _LEFT if x < -1 else 0
         return oc
 
-    def __init__(self, graph, populate=dolittle, args=[], origin=(0, 0), excursion=(1, 1), color=YELLOW):
+    def __init__(self, graph, populate=None, args=[], origin=(0, 0),
+                 excursion=(1, 1), color=YELLOW):
+        if not isinstance(self, PolarCurve):  # Check not done in subclass
+            if not isinstance(graph, CartesianGraph):
+                raise ValueError('Curve must use a CartesianGraph instance.')
         self.graph = graph
         self.populate = populate
-        self.callback_args = args
+        self.args = args
         self.origin = origin
         self.excursion = excursion
         self.color = color
@@ -68,10 +78,7 @@ class Curve(object):
             self.lastpoint = None
             return
 
-        newpoint = self._scale(x, y)  # In-range points scaled to +-1 bounding box
-        if self.newpoint == newpoint:
-            return  # Discard coincident points
-        self.newpoint = newpoint
+        self.newpoint = self._scale(x, y)  # In-range points scaled to +-1 bounding box
         if self.lastpoint is None:  # Nothing to plot. Save for next line.
             self.lastpoint = self.newpoint
             return
@@ -115,7 +122,12 @@ class Curve(object):
     def show(self):
         self.graph.addcurve(self) # May have been removed by clear()
         self.lastpoint = None
-        self.populate(self, *self.callback_args)
+        if self.populate is not None:
+            pop = self.populate(self, *self.args)
+            if isinstance(pop, type_gen):
+                # populate was a generator function, pop is a generator.
+                for x, y in pop:
+                    self.point(x, y)
 
     def _scale(self, x, y):  # Scale to +-1.0
         x0, y0 = self.origin
@@ -125,7 +137,9 @@ class Curve(object):
         return xs, ys
 
 class PolarCurve(Curve): # Points are complex
-    def __init__(self, graph, populate=dolittle, args=[], color=YELLOW):
+    def __init__(self, graph, populate=None, args=[], color=YELLOW):
+        if not isinstance(graph, PolarGraph):
+            raise ValueError('PolarCurve must use a PolarGraph instance.')
         super().__init__(graph, populate, args, color=color)
 
     def point(self, z=None):
@@ -134,24 +148,58 @@ class PolarCurve(Curve): # Points are complex
             self.lastpoint = None
             return
 
-        newpoint = self._scale(z.real, z.imag)  # In-range points scaled to +-1 bounding box
-        if self.newpoint == newpoint:
-            return  # Discard coincident points
-        self.newpoint = newpoint
+        # In-range points scaled to +-1 bounding box
+        self.newpoint = self._scale(z.real, z.imag)
         if self.lastpoint is None:  # Nothing to plot. Save for next line.
             self.lastpoint = self.newpoint
             return
 
         res = self._clip(*(self.lastpoint + self.newpoint))  # Clip to +-1 box
         if res is not None:  # At least part of line was in box
-            self.graph.rline(res, self.color)
-            #start = self.lastpoint[0] + self.lastpoint[1]*1j
-            #end = self.newpoint[0] + self.newpoint[1]*1j
-            #self.graph.line(start, end, self.color)
+            start = res[0] + 1j*res[1]
+            end = res[2] + 1j*res[3]
+            self.graph.cline(start, end, self.color)
         self.lastpoint = self.newpoint  # Scaled but not clipped
 
+    def show(self):
+        self.graph.addcurve(self) # May have been removed by clear()
+        self.lastpoint = None
+        if self.populate is not None:
+            pop = self.populate(self, *self.args)
+            if isinstance(pop, type_gen):
+                # populate was a generator function, pop is a generator.
+                for z in pop:
+                    self.point(z)
 
-class Graph(object):
+
+class TSequence(Curve):
+    def __init__(self, graph, color, size, yorigin=0, yexc=1):
+        super().__init__(graph, populate=None, args=[], origin=(0, yorigin),
+                         excursion=(1, yexc), color=color)
+        self.data = array('f', (0 for _ in range(size)))
+        self.cur = 0
+        self.size = size
+        self.count = 0
+
+    def add(self, v):
+        p = self.cur
+        size = self.size
+        self.data[self.cur] = v
+        self.cur += 1
+        self.cur %= size
+        if self.count < size:
+            self.count += 1
+        x = 0
+        dx = 1/size
+        for _ in range(self.count):
+            self.point(x, self.data[p])
+            x -= dx
+            p -= 1
+            p %= size
+        self.point()
+
+
+class Graph():
     def __init__(self, location, height, width, gridcolor):
         border = self.border # border width
         self.x0 = self.location[0] + border
@@ -171,9 +219,11 @@ class Graph(object):
         self.show()
 
 class CartesianGraph(NoTouch, Graph):
-    def __init__(self, location, *, height=250, width = 250, fgcolor=WHITE, bgcolor=None, border=None,
-                 gridcolor=LIGHTGREEN, xdivs=10, ydivs=10, xorigin=5, yorigin=5):
-        NoTouch.__init__(self, location, None, height, width, fgcolor, bgcolor, None, border, None, None)
+    def __init__(self, location, *, height=250, width=250, fgcolor=WHITE,
+                 bgcolor=None, border=None, gridcolor=LIGHTGREEN, xdivs=10,
+                 ydivs=10, xorigin=5, yorigin=5):
+        NoTouch.__init__(self, location, None, height, width, fgcolor, bgcolor,
+                         None, border, None, None)
         Graph.__init__(self, location, height, width, gridcolor)
         self.xdivs = xdivs
         self.ydivs = ydivs
@@ -181,7 +231,8 @@ class CartesianGraph(NoTouch, Graph):
         self.yorigin = yorigin
         height -= 2 * self.border
         width -= 2 * self.border
-        self.x_axis_len = max(xorigin, xdivs - xorigin) * width / xdivs # Max distance from origin in pixels
+        # Max distance from origin in pixels
+        self.x_axis_len = max(xorigin, xdivs - xorigin) * width / xdivs
         self.y_axis_len = max(yorigin, ydivs - yorigin) * height / ydivs
         self.xp_origin = self.x0 + xorigin * width / xdivs # Origin in pixels
         self.yp_origin = self.y0 + (ydivs - yorigin) * height / ydivs
@@ -192,6 +243,7 @@ class CartesianGraph(NoTouch, Graph):
         x1 = self.x1
         y0 = self.y0
         y1 = self.y1
+        #tft.fill_rectangle(x0, y0, x1, y1, self.bgcolor)
         if self.ydivs > 0:
             height = y1 - y0
             dy = height / (self.ydivs) # Y grid line
@@ -209,17 +261,19 @@ class CartesianGraph(NoTouch, Graph):
         for curve in self.curves:
             curve.show()
 
-    def line(self, start, end, color): # start and end relative to origin and scaled -1 .. 0 .. +1
-        xs = int(self.xp_origin + start[0] * self.x_axis_len)
-        ys = int(self.yp_origin - start[1] * self.y_axis_len)
-        xe = int(self.xp_origin + end[0] * self.x_axis_len)
-        ye = int(self.yp_origin - end[1] * self.y_axis_len)
+    # start and end relative to origin and scaled -1 .. 0 .. +1
+    def line(self, start, end, color):
+        xs = round(self.xp_origin + start[0] * self.x_axis_len)
+        ys = round(self.yp_origin - start[1] * self.y_axis_len)
+        xe = round(self.xp_origin + end[0] * self.x_axis_len)
+        ye = round(self.yp_origin - end[1] * self.y_axis_len)
         self.tft.draw_line(xs, ys, xe, ye, color)
 
 class PolarGraph(NoTouch, Graph):
-    def __init__(self, location, *, height=250, fgcolor=WHITE, bgcolor=None, border=None,
-                 gridcolor=LIGHTGREEN, adivs=3, rdivs=4):
-        NoTouch.__init__(self, location, None, height, height, fgcolor, bgcolor, None, border, None, None)
+    def __init__(self, location, *, height=250, fgcolor=WHITE, bgcolor=None,
+                 border=None, gridcolor=LIGHTGREEN, adivs=3, rdivs=4):
+        NoTouch.__init__(self, location, None, height, height, fgcolor,
+                         bgcolor, None, border, None, None)
         Graph.__init__(self, location, height, height, gridcolor)
         self.adivs = 2 * adivs # No. of divisions of Pi radians
         self.rdivs = rdivs # No. of divisions of radius
@@ -232,11 +286,13 @@ class PolarGraph(NoTouch, Graph):
         tft = self.tft
         x0 = self.x0
         y0 = self.y0
+        #tft.fill_rectangle(x0, y0, self.x1, self.y1, self.bgcolor)
         radius = self.radius
         diam = 2 * radius
         if self.rdivs > 0:
             for r in range(1, self.rdivs + 1):
-                tft.draw_circle(self.xp_origin, self.yp_origin, int(radius * r / self.rdivs), self.gridcolor)
+                tft.draw_circle(self.xp_origin, self.yp_origin,
+                                int(radius * r / self.rdivs), self.gridcolor)
         if self.adivs > 0:
             v = complex(1)
             m = rect(1, pi / self.adivs)
@@ -248,17 +304,10 @@ class PolarGraph(NoTouch, Graph):
         for curve in self.curves:
             curve.show()
 
-    def cline(self, start, end, color): # start and end are complex, 0 <= magnitude <= 1
-        xs = int(self.xp_origin + start.real * self.radius)
-        ys = int(self.yp_origin - start.imag * self.radius)
-        xe = int(self.xp_origin + end.real * self.radius)
-        ye = int(self.yp_origin - end.imag * self.radius)
-        self.tft.draw_line(xs, ys, xe, ye, color)
-
-    def rline(self, vect, color): # start and end relative to origin and scaled -1 .. 0 .. +1
-        height = self.radius  # Unit: pixels
-        xs = int(self.xp_origin + vect[0] * height)
-        ys = int(self.yp_origin - vect[1] * height)
-        xe = int(self.xp_origin + vect[2] * height)
-        ye = int(self.yp_origin - vect[3] * height)
+    # start and end are complex, 0 <= magnitude <= 1
+    def cline(self, start, end, color):
+        xs = round(self.xp_origin + start.real * self.radius)
+        ys = round(self.yp_origin - start.imag * self.radius)
+        xe = round(self.xp_origin + end.real * self.radius)
+        ye = round(self.yp_origin - end.imag * self.radius)
         self.tft.draw_line(xs, ys, xe, ye, color)
