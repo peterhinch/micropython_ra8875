@@ -38,7 +38,7 @@ Methods.
  subsequent pixels will be rendered with the specified `color` modified to the
  current greyed-out style. If `False` is passed they will be rendered normally.
  Note that `desaturate` and `dim` methods set the grey style. They only affect
- rendering when the greyed- out status is set.
+ rendering when the greyed- out status is set via `usegrey`.
  4. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
  5. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
  6. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
@@ -49,24 +49,24 @@ Methods.
  9. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
  10. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
  11. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
- 12. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from (x1, y1) to
- (x2, y2).
+ 12. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
+ `x2, y2`.
  13. `text_style` Arg `style=None`. If `None` is passed, return the current
  text style. See below for definition of text style.
  14. `print_string` Args `s, x, y` Print string `s` at location `x, y` in the
  current style. This method is rudimentary and does not handle control chars or
  newlines.
 
-## 1.1 Text style
+### Text style
 
 This is a `(fgcolor, bgcolor, font)` tuple where `fgcolor` and `bgcolor` are
-foreground and background colors as `(r, g, b` tuples. `font` is the name of an
-imported Python font.
+foreground and background colors as `(r, g, b)` tuples. `font` is the name of
+an imported Python font.
 
 # 2. The RA8875 class
 
 Colors are specified as (r, g, b) tuples. They are converted to 16 bit RGB565
-values by the RA8875 `to_rgb565` static method.
+values by the `RA8875.to_rgb565` static method.
 
 Constructor. This takes the following mandatory arguments.  
  1. `spi` An initialised SPI bus instance.
@@ -79,11 +79,11 @@ Constructor. This takes the following mandatory arguments.
  6. `loop=None` An event loop instance or `None`.
 
 If `loop` is supplied the constructor launches a `._dotouch` asynchronous
-method which handles the touch panel. If `None` is passed this will not be run,
-so the touch panel will be inoperative.
+method which handles the touch panel. If `None` is passed this will not be run:
+the touch panel will be inoperative.
 
 Display methods required for GUI:  
- 1. `clr_scr` Clear screen (all pixels off).
+ 1. `clr_scr` No args. Clear screen (all pixels off).
  2. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
  3. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
  4. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
@@ -94,19 +94,21 @@ Display methods required for GUI:
  7. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
  8. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
  9. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
- 10. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from (x1, y1) to
- (x2, y2).
+ 10. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
+ `x2, y2`.
  11. `save_region` Args `mv, x1, y1, x2, y2` Copy pixels from the defined
  region in the RA8875 frame buffer into a user supplied buffer. `mv` is a
- memoryview into a bytearray which must have sufficient capacity to hold 2
+ `memoryview` into a `bytearray` which must have sufficient capacity to hold 2
  bytes per pixel. See note below.
  12. `restore_region` Args `mv, x1, y1, x2, y2`. Draw the contents of the user
- supplied buffer at a region defined by the supplied coordinates. These may
- differ from those used for the save, but the aspect ratio must be unchanged.
+ supplied buffer passed as a `memoryview`. The data is rendered at a region
+ defined by the supplied coordinates. These may differ from those used for the
+ save, but the aspect ratio must be unchanged.
  13. `draw_glyph` Args `mv, x, y, rows, cols, fgcolor, bgcolor` The `mv` arg is
- a `memoryview` into a `bytes` object holding a glyph bitmap. This is a one bit
- horizontally mapped array. It is rendered at `x, y` and the glyph is organised
- as `rows, cols`. Rendering uses the supplied foreground and background colors.
+ a `memoryview` into a `bytes` object holding a glyph bitmap. The bitmap uses
+ one bit per pixel as a horizontally mapped array. It is rendered at `x, y` and
+ the glyph is organised as `rows, cols`. Rendering uses the supplied foreground
+ and background colors.
 
 Touchpanel (TP) methods required by GUI:  
  1. `ready` No args. Returns `True` if TP data is available.
@@ -117,15 +119,24 @@ Touchpanel (TP) methods required by GUI:
 
 Additional methods:  
  1. `calibrate` Args `xmin, ymin, xmax, ymax` Apply user-specified calibration
- values to future touchpanel readings. User-modified code in `tft_local.py`
- suppies the reported raw values for the top leftmost and bottom rightmost
- pixels.
+ values to future touchpanel readings. See below.
  2. `width` No args. Return display width in pixels.
  3. `height` No args. Return display height in pixels.
  4. `draw_pixel` Args `x, y, color` draw a single pixel.
  5. `get_pixel` Args `x, y` Return the RGB565 value of a pixel.
 
+### save_region
+
 Note that the `save_region` method is not guaranteed to work reliably: in my
 testing the chip does not return deterministic data. It seems to work well
 enough for the `Meter` control, but the `Slider` controls did not work well
 and have been rewritten to avoid using this feature.
+
+### Calibration
+
+The user runs `cal.py` to determine the reported coordinates of the top left
+and bottom right of the display. The code in `tft_local.py` is modified to call
+`.calibrate` with those values.
+
+This ensures that the GUI acquires corrected coordinates from the touch panel.
+

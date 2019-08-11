@@ -2,6 +2,8 @@
 
 These are based on the 4.3 inch display.
 
+###### [GUI docs](./GUI.md)
+
 # Puhbuttons
 
 ![Buttons](./buttons.JPG)

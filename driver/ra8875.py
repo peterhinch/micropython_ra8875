@@ -50,7 +50,8 @@ MAX_CHAR_WIDTH = const(100)
 # r1 Pointer to destination bytes
 # r2 Bit count (columns) << 16 | backgound color
 # r3 Color value (LS 16 bits RGB565 little endian)
-# Viper version adds 3% to glyph rendering time compared to assembler.
+# Viper version adds 3% to glyph rendering time compared to assembler: I
+# accepted a minimal overhead in the name of portability.
 
 @micropython.viper
 def lcopy(ps : ptr8, pd : ptr8, bcbg : int, fgc : int):
@@ -72,32 +73,6 @@ def lcopy(ps : ptr8, pd : ptr8, bcbg : int, fgc : int):
         if not mask:
             mask = 0x80
             sp += 1
-
-#@micropython.asm_thumb
-#def lcopy(r0, r1, r2, r3):
-    #movw(r7, 0xffff)
-    #and_(r7, r2)  # r7 = BG color
-    #mov(r6, 16)
-    #lsr(r2, r6)  # r2 = Bit count
-    #mov(r5, 1)
-    #add(r1, 3)  # Skip preamble 
-    #label(BYTE)  # Next byte
-    #mov(r6, 0x80)  # r6 == bit mask
-    #ldrb(r4, [r0, 0])  # Current source byte
-    #label(BIT)  # Next bit
-    #tst(r4, r6)  # Test masked bit
-    #ite(eq)
-    #strh(r7, [r1, 0])  # Black
-    #strh(r3, [r1, 0])  # Passed color
-    #sub(r2, 1)
-    #beq(DONE)
-    #add(r1, 2)  # Next dest halfword
-    #lsr(r6, r5)  # mask >>= 1
-    #bne(BIT)
-    #add(r0, 1)
-    #b(BYTE)
-    #label(DONE)
-
 
 # SPI: Adafruit recommend 6MHz. Default polarity and phase (0)
 class RA8875:
@@ -251,13 +226,6 @@ class RA8875:
     def _wait_complete(self, reg=0x90, mask=0x80):
         while self._read_reg(reg) & mask:
             sleep_ms(1)
-
-    #def _read_status(self,  buf=bytearray(1)):
-        #self._pincs(0)
-        #self._spi.write(b'\xc0')  # RA8875_CMDREAD
-        #self._spi.readinto(buf)
-        #self._pincs(1)
-        #return buf[0]
 
     def width(self):
         return self._width
@@ -424,10 +392,9 @@ class RA8875:
         xh[3] = x >> 8
         for row in range(rows):
             # dest[0:3] holds b'\x80\x02\x00' RA8875_CMDWRITE, MRWC, RA8875_DATAWRITE
+            # populated by constructor.
             # lcopy populates dest[3:] with color value for each pixel in row.
             lcopy(src + offs, dest, cx, on)
-            # The following requires firmware after 6th Aug 2019. It is slightly slower.
-            # lcopy(mv[offs:offs + gbytes], dest, cx, on)
             yl[3] = y & 0xff
             yh[3] = y >> 8
             self._pincs(0)
@@ -460,7 +427,7 @@ class RA8875:
         self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE, MRWC
         self._pincs(1)
         self._pincs(0)
-        self._spi.read(1, 0x40)  # Discarding an initial read seems to help
+        self._spi.read(1, 0x40)  # HACK Discarding an initial read seems to help
         self._spi.read(1, 0x40)
         self._spi.read(1, 0x40)
         self._pincs(1)
@@ -476,25 +443,6 @@ class RA8875:
                 self._spi.readinto(mv[offs : offs + 2])
                 offs += 2
                 self._pincs(1)
-
-    # This is unreliable: the chip does not return consistent data. Note that
-    # https://github.com/sumotoy/RA8875/blob/0.70/RA8875.cpp has similar code
-    # commented out so I guess they found the same.
-    #def save_region_buggy(self, mv, x1, y1, x2, y2):
-        #bpr = 2 * (x2 - x1 + 1)  # Bytes per row (2 bytes/pixel)
-        #rows = y2 - y1 + 1
-        #offs = 0
-        #for row in range(rows):
-            #self._setxy(x1, y1, False)  # Set up device for a read
-            #self._pincs(0)
-            #self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE, MRWC
-            #self._pincs(1)
-            #self._pincs(0)
-            #self._spi.read(1, 0x40)  # RA8875_DATAREAD Discard 1st byte
-            #self._spi.readinto(mv[offs : offs + bpr], 0x40)  # Does not allocate
-            #self._pincs(1)
-            #offs += bpr
-            #y1 += 1
 
     def restore_region(self, mv, x1, y1, x2, y2):  # OK
         bpr = 2 * (x2 - x1 + 1)  # Bytes per row (2 bytes/pixel)

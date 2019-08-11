@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.10 8th Aug 2019.
+V0.10 Alpha 11th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -15,45 +15,46 @@ It should work with any target which supports the Viper code generator.
 Further images are avaliable [here](./IMAGES.md).
 
 The library can use the fonts internal to the device and also arbitrary fonts
-converted from `ttf` or `otf` formats.
+converted from `ttf` or `otf` formats using
+[font_to_py.py](https://github.com/peterhinch/micropython-font-to-py.git).
 
 An extension for plotting simple graphs is described [here](./LPLOT.md).
 
 # Contents
 
-1. [Getting started](./README.md#1-getting-started)  
-  1.1 [Installation](./README.md#11-installation)  
-  1.2 [Python files](./README.md#12-python-files)  
-  1.3 [Calibration](./README.md#13-calibration)  
-  1.4 [RA8875 issues](./README.md#14-ra8875-issues)  
-2. [Concepts](./README.md#2-concepts)  
-  2.1 [Terminology](./README.md#21-terminology)  
-  2.2 [Coordinates](./README.md#22-coordinates)  
-  2.3 [Colors](./README.md#23-colors)  
-  2.4 [Callbacks](./README.md#24-callbacks)  
-  2.5 [Screens](./README.md#25-screens)  
-3. [Program Structure](./README.md#3-program-structure)  
-  3.1 [Initialisation](./README.md#31-initialisation)  
-4. [Class Screen](./README.md#4-class-screen)  
-5. [Display Classes](./README.md#5-display-classes)  
-  5.1 [Class Label](./README.md#51-class-label)  
-  5.2 [Class Dial](./README.md#52-class-dial)  
-  5.3 [Class LED](./README.md#53-class-led)  
-  5.4 [Class Meter](./README.md#54-class-meter)  
-6. [Control Classes](./README.md#6-control-classes)  
-  6.1 [Class Slider](./README.md#61-class-slider)  
-  6.2 [Class Knob](./README.md#62-class-knob)  
-  6.3 [Class Checkbox](./README.md#63-class-checkbox)  
-  6.4 [Class Button](./README.md#64-class-button)  
-  6.5 [Class ButtonList: emulate a button with multiple states](./README.md#65-class-buttonlist-emulate-a-button-with-multiple-states)  
-  6.6 [Class RadioButtons](./README.md#66-class-radiobuttons)  
-  6.7 [Class Listbox](./README.md#67-class-listbox)  
-  6.8 [Class Dropdown](./README.md#68-class-dropdown)  
-7. [Dialog Boxes](./README.md#7-dialog-boxes)  
-  7.1 [Class Aperture](./README.md#71-class-aperture)  
-  7.2 [Class DialogBox](./README.md#72-class-dialogbox)  
-8. [Fonts](./README.md#8-fonts)  
-9. [References](./README.md#9-references)  
+1. [Getting started](./GUI.md#1-getting-started)  
+  1.1 [Installation](./GUI.md#11-installation)  
+  1.2 [Python files](./GUI.md#12-python-files)  
+  1.3 [Calibration](./GUI.md#13-calibration)  
+  1.4 [RA8875 issues](./GUI.md#14-ra8875-issues)  
+2. [Concepts](./GUI.md#2-concepts)  
+  2.1 [Terminology](./GUI.md#21-terminology)  
+  2.2 [Coordinates](./GUI.md#22-coordinates)  
+  2.3 [Colors](./GUI.md#23-colors)  
+  2.4 [Callbacks](./GUI.md#24-callbacks)  
+  2.5 [Screens](./GUI.md#25-screens)  
+3. [Program Structure](./GUI.md#3-program-structure)  
+  3.1 [Initialisation](./GUI.md#31-initialisation)  
+4. [Class Screen](./GUI.md#4-class-screen)  
+5. [Display Classes](./GUI.md#5-display-classes)  
+  5.1 [Class Label](./GUI.md#51-class-label)  
+  5.2 [Class Dial](./GUI.md#52-class-dial)  
+  5.3 [Class LED](./GUI.md#53-class-led)  
+  5.4 [Class Meter](./GUI.md#54-class-meter)  
+6. [Control Classes](./GUI.md#6-control-classes)  
+  6.1 [Class Slider](./GUI.md#61-class-slider)  
+  6.2 [Class Knob](./GUI.md#62-class-knob)  
+  6.3 [Class Checkbox](./GUI.md#63-class-checkbox)  
+  6.4 [Class Button](./GUI.md#64-class-button)  
+  6.5 [Class ButtonList: emulate a button with multiple states](./GUI.md#65-class-buttonlist-emulate-a-button-with-multiple-states)  
+  6.6 [Class RadioButtons](./GUI.md#66-class-radiobuttons)  
+  6.7 [Class Listbox](./GUI.md#67-class-listbox)  
+  6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
+7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
+  7.1 [Class Aperture](./GUI.md#71-class-aperture)  
+  7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
+8. [Fonts](./GUI.md#8-fonts)  
+9. [References](./GUI.md#9-references)  
 
 # 1. Getting started
 
@@ -92,11 +93,6 @@ Familiarity with callbacks and event driven programming will assist in developin
 applications.
 
 ## 1.2 Python files
-
-Library directory:
- 1. The uasyncio library may be copied to the Pyboard or flashed as frozen
- bytecode. To do this copy `lib\*` containing the uasyncio installation to
- your frozen modules directory and build.
 
 Core files:
  1. `ugui.py` The micro GUI library.
@@ -164,10 +160,10 @@ these values (x_left, y_left, x_right, y_right), and copy to the device.
 It is then suggested that you run one or more of the demos. Hit ctrl-d to reset
 the board and issue (for example):
 ```python
->>> from micropython_ra8875.demos import hst
+>>> import micropython_ra8875.demos.hst
 ```
 Documentation references e.g. for the device driver may be found in
-[section 9](./README.md#9-references).
+[section 9](./GUI.md#9-references).
 
 ## 1.4 RA8875 issues
 
@@ -181,16 +177,16 @@ Secondly reading back the contents of the chip's framebuffer is unreliable. The
 this. The only class to use readback is `Meter`: see the notes on that widget
 for possible consequences.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 2. Concepts
 
 ## 2.1 Terminology
 
-GUI objects are created on a `Screen` instance which normally fills the
-entire physical screen. Displayable GUI objects comprise `control` and
-`display` instances. The former can respond to touch (e.g. `Pushbutton`
-instances) while the latter cannot (e.g. `LED` or `Dial` instances).
+Widgets are created on a `Screen` instance which normally fills the entire
+physical screen. Widgets are either `control` or `display` objects. The former
+can respond to touch (e.g. `Pushbutton` instances) while the latter cannot
+(e.g. `LED` or `Dial` instances).
 
 ## 2.2 Coordinates
 
@@ -214,8 +210,13 @@ be executed when a given event occurs. A callback function receives positional
 arguments. The first is a reference to the object raising the callback.
 Subsequent arguments are user defined, and are specified as a tuple or list of
 items. Callbacks are optional, as are the argument lists - a default null
-function and empty list are provided. Callbacks are usually bound methods - see
-the Screens section for a reason why this is useful.
+function and empty list are provided. Callbacks are typically written as bound
+methods - see the Screens section for a reason why this is useful.
+
+When writing callbacks take care to ensure that the number of arguments passed
+is correct, bearing in mind the first arg listed above. Failure to do this will
+result in tracebacks which implicate the GUI code rather than the buggy user
+code: this is because the GUI runs the callbacks.
 
 All controls and displays have a `tft` property which is the `TFT` instance.
 This enables callbacks to access drawing primitives.
@@ -240,12 +241,12 @@ The `Screen` class has 3 null methods which may be implemented in subclasses:
 `on_open` which runs when a screen is opened but prior to its display,
 `after_open` which is called after display, and `on_hide` which runs when a
 screen change is about to make the screen disappear. These may be used to
-instantiate or control threads and to retrieve the results from a modal dialog
-box.
+instantiate or control `uasyncio` tasks and to retrieve the results from a
+modal dialog box.
 
 The `Screen` class is configured in `tft_local.py`.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 3. Program Structure
 
@@ -266,7 +267,7 @@ class BaseScreen(Screen):
     def __init__(self):
         super().__init__()
         quitbutton()
-setup()
+setup()  # Initialise hardware, register touchscreen calibration
 Screen.change(BaseScreen)
 ```
 
@@ -278,9 +279,10 @@ and the scheduler is stopped (`Screen.shutdown()`).
 ## 3.1 Initialisation
 
 This is performed by `tft_local.py` which instantiates a `TFT` display. This
-class is derived from the driver's `RA8875` class.
+class is derived from the driver's `RA8875` class and is documented
+[here](./DRIVER.md).
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 4. Class Screen
 
@@ -359,7 +361,8 @@ Other method:
  property. The `TFT` class provides access to graphics primitives and is
  documented [here](./DRIVER.md).
 
-See `lbt.py` and `ldb.py` for examples of multi-screen design.
+See `demos/pt.py` and `demos/screentest.py` for examples of multi-screen
+design.
 
 ## 4.2 Constructor
 
@@ -373,7 +376,7 @@ By default these do nothing; they may be defined in subclasses if required.
  * `after_open` Called after a screen has been displayed.
  * `on_hide` Called when a screen ceases to be current.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 5. Display Classes
 
@@ -402,7 +405,7 @@ Method:
  * `value` Argument `val` string, default `None`. If provided, refreshes
  the label with the passed text otherwise clears the text in the label.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 5.2 Class Dial
 
@@ -431,7 +434,7 @@ Method:
  pointer index exceeds the number of pointers defined by the constructor
  `pointers` argument.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 5.3 Class LED
 
@@ -454,7 +457,7 @@ Methods:
  * `color` Argument `color`. Change the LED color without altering its
  state.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 5.4 Class Meter
 
@@ -491,7 +494,7 @@ GUI provides a functionally identical `MeterFlicker` class which avoids this
 feature; as the name suggests the consequence is a degree of flicker whenever
 the value changes.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 
 # 6. Control Classes
@@ -548,7 +551,7 @@ Methods:
  * `color` Mandatory arg `color` The control is rendered in the selected
  color. This supports dynamic color changes  
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.2 Class Knob
 
@@ -586,7 +589,7 @@ Methods:
  correspond to the new value. The move callback will run. The method constrains
  the range to 0.0 to 1.0. Always returns the control's value.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.3 Class Checkbox
 
@@ -618,7 +621,7 @@ Methods:
  correspond to the control's current value, updates it; the checkbox is
  re-drawn and the callback executed. Always returns the control's value.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.4 Class Button
 
@@ -662,7 +665,7 @@ Class variables:
  * `lit_time` Period in seconds the `litcolor` is displayed. Default 1.
  * `long_press_time` Press duration for a long press. Default 1 second.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.5 Class ButtonList emulate a button with multiple states
 
@@ -707,7 +710,7 @@ for t in table: # Buttons overlay each other at same location
     bl.add_button((10, 10), font = font14, fontcolor = BLACK, **t)
 ``
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.6 Class RadioButtons
 
@@ -749,7 +752,7 @@ for t in table:
     x += 60 # Horizontal row of buttons
 ```
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.7 Class Listbox
 
@@ -791,7 +794,7 @@ Methods:
 The callback is triggered whenever a listbox item is pressed, even if that item
 is already currently selected.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.8 Class Dropdown
 
@@ -833,7 +836,7 @@ Methods:
 The callback is triggered if an item on the dropdown list is touched and that
 item is not currently selected (i.e. when a change occurs).
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 7. Dialog Boxes
 
@@ -855,7 +858,7 @@ Given coordinates relative to the dialog box, it provides an absolute
 `location` 2-tuple suitable as a constructor argument for `control` or
 `display` classes. See `ldb.py` for example usage.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 7.1 Class Aperture
 
@@ -889,7 +892,7 @@ Class method:
  can query this by implementing an `on_open` method which calls
  `Aperture.value()` (see `ldb.py`).
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 7.2 Class DialogBox
 
@@ -917,7 +920,7 @@ Optional keyword only args:
 Pressing any button closes the dialog and sets the `Aperture` value to the
 text of the button pressed or 'Close' in the case of the `close` button.
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)
 
 # 8. Fonts
 
@@ -939,4 +942,4 @@ Other references:
 [Proposed standard font format](https://github.com/peterhinch/micropython-font-to-py)  
 [uasyncio libraries and notes](https://github.com/peterhinch/micropython-async)  
 
-###### [Jump to Contents](./README.md#contents)
+###### [Jump to Contents](./GUI.md#contents)

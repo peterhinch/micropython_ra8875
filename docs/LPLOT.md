@@ -20,6 +20,8 @@ RA8875 GUI library: this should be installed, configured and tested before use.
   4.3 [class TSequence](./LPLOT.md#43-class-tSequence) Plot reatime Y values
   on the time axis.  
 
+###### [GUI docs](./GUI.md)
+
 # 1. Python files
 
  1. `plot.py` The plot library
