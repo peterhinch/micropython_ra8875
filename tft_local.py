@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 
 import uasyncio as asyncio
-from machine import Pin, SPI
+from machine import Pin, SPI, freq
 from micropython import const
 
 _WIDTH = const(480)  # Edit to match your display: 800*480 or 480*272
@@ -36,6 +36,8 @@ _RESET = 'X4'
 _CS = 'X5'
 
 def setup(driver_test=False, use_async=True):
+    # Option for Pyboard D
+    # freq(216_000_000)
     pinrst = Pin(_RESET, Pin.OUT, value=1)
     pincs = Pin(_CS, Pin.OUT, value=1)
     spi = SPI(_SPI, baudrate=6_000_000)

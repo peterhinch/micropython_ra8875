@@ -132,13 +132,6 @@ class RA8875:
         sleep_ms(2)
         self._pinrst(1)
         sleep_ms(20)
-        # Can't find this in datasheet but Adafruit check for a value of 0x75
-        # in Arduino code. In my testing it returns 58 (0x3a)
-        rv = self._read_reg(0)
-        if rv != 0x3a:
-            print('REG[0] return value:', rv)
-            print('Possible hardware error. Please check wiring.')
-            #raise RuntimeError('RA8875 not detected')
 
     # System clock: the crystal apperas to be 20MHz but the schematic is hard to read.
     # If so, the systam clock is 60MHz (value 0x0b) or 55MHz (value 0x0a)

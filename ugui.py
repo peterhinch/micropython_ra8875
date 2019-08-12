@@ -581,7 +581,7 @@ class Meter(NoTouch):
                  fgcolor=None, bgcolor=None, pointercolor=None, fontcolor=None,
                  divisions=10, legends=None, value=0):
         border = 5 if font is None else 1 + font.height() / 2
-        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None) # super() provoked Python bug
+        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None)
         border = self.border # border width
         self.savebuf = memoryview(bytearray((self.width + 3) * 2))  # 2 bytes per pixel
         self.x0 = self.location[0]
@@ -631,7 +631,7 @@ class MeterFlicker(NoTouch):
                  fgcolor=None, bgcolor=None, pointercolor=None, fontcolor=None,
                  divisions=10, legends=None, value=0):
         border = 5 if font is None else 1 + font.height() / 2
-        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None) # super() provoked Python bug
+        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None)
         border = self.border # border width
         self.x0 = self.location[0]
         self.x1 = self.location[0] + self.width
