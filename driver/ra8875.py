@@ -347,19 +347,6 @@ class RA8875:
         self._spi.write(b'\x00' + int.to_bytes(RA8875._to_rgb565(rgb), 2, 'little'))  # MSB 1st
         self._pincs(1)
 
-    # Read back RGB565 value of a pixel.
-    def get_pixel(self, x, y, buf=bytearray(3)):
-        self._setxy(x, y, False)
-
-        self._pincs(0)
-        self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE RA8875_DATAREAD
-        self._pincs(1)
-        self._pincs(0)
-        self._spi.write(b'\x40')
-        self._spi.readinto(buf, 0x40)  # Data read
-        self._pincs(1)
-        return int.from_bytes(buf[1:], 'big')
-
     # Draw a glyph. Note mv is a memoryview into the horizontally mapped glyph.
     # Caller must validate dimensions.
     # Optimisation: don't deassert CS between writing register no. and writing
@@ -409,49 +396,6 @@ class RA8875:
             offs += gbytes
 
 
-    # Save a region of the framebuf into a supplied memoryview. Data is saved
-    # as 16-bit RGB565 values.
-    # Reading a region is not guaranteed to work: the RA8875 does not behave
-    # consistently. Accordingly in the GUI I removed the need for it except in
-    # the case of the Meter class.
-    def save_region(self, mv, x1, y1, x2, y2):
-        self._setxy(x1, y1, False)  # Set up device for a read
-        self._pincs(0)
-        self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE, MRWC
-        self._pincs(1)
-        self._pincs(0)
-        self._spi.read(1, 0x40)  # HACK Discarding an initial read seems to help
-        self._spi.read(1, 0x40)
-        self._spi.read(1, 0x40)
-        self._pincs(1)
-        offs = 0
-        for y in range(y1, y2 + 1):  # x and y ranges are inclusive
-            for x in range(x1, x2 + 1):
-                self._setxy(x, y, False)  # Set up device for a read
-                self._pincs(0)
-                self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE, MRWC
-                self._pincs(1)
-                self._pincs(0)
-                self._spi.read(1, 0x40)  # RA8875_DATAREAD Discard 1st byte
-                self._spi.readinto(mv[offs : offs + 2])
-                offs += 2
-                self._pincs(1)
-
-    def restore_region(self, mv, x1, y1, x2, y2):  # OK
-        bpr = 2 * (x2 - x1 + 1)  # Bytes per row (2 bytes/pixel)
-        rows = y2 - y1 + 1
-        offs = 0
-        for row in range(rows):
-            self._setxy(x1, y1, True)
-            self._pincs(0)
-            self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE, MRWC 
-            self._pincs(1)
-            self._pincs(0)
-            self._spi.write(b'\x00')  # RA8875_DATAWRITE
-            self._spi.write(mv[offs : offs + bpr])
-            self._pincs(1)
-            offs += bpr
-            y1 += 1
 
     # **** TOUCH PANEL ****
 

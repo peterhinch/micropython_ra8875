@@ -51,10 +51,9 @@ class SliderScreen(Screen):
                 'font' : font10,
                 }
         quitbutton()
-        meter1 = Meter((320, 0), font=font10, legends=('0','5','10'), pointercolor=YELLOW,
-                           fgcolor=CYAN, bgcolor=BLACK)
-        meter2 = Meter((360, 0), font=font10, legends=('0','5','10'), pointercolor=YELLOW,
-                           fgcolor=CYAN, bgcolor=BLACK)
+        meter1 = Meter((320, 0), pointercolor=YELLOW, fgcolor=CYAN, bgcolor=BLACK)
+        meter2 = Meter((360, 0), font=font10, legends=('0','5','10'), pointercolor=GREEN,
+                           fgcolor=CYAN, bgcolor=BLACK, cb_move=self.meter_change)
         x = 230
         lstlbl = []
         for n in range(3):
@@ -94,6 +93,15 @@ class SliderScreen(Screen):
     def cb_en_dis(self, button, disable, itemlist):
         for item in itemlist:
             item.greyed_out(disable)
+
+    def meter_change(self, meter):
+        val = meter.value()
+        if val > 0.8:
+            meter.color(RED)
+        elif val < 0.2:
+            meter.color(BLUE)
+        else:
+            meter.color(GREEN)
 
 # Either slave has had its slider moved (by user or by having value altered)
     def slave_moved(self, slider, lbl):

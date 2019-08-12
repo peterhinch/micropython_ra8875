@@ -56,11 +56,6 @@ tft.draw_vline(x + 50, y, 50, GREEN)
 tft.draw_line(x, y, x + 50, y + 50, GREEN)
 tft.draw_line(x, y + 50, x + 50, y, GREEN)
 
-# Save and restore a region
-mv = memoryview(bytearray(4*(40 + 3)))
-tft.save_region(mv, 9, 10, 14, 11)
-# print(bytes(mv))
-tft.restore_region(mv, 9, 150, 14, 151)
 
 # Render a glyph and measure performance.
 mv, rows, cols = font10.get_ch('A')
@@ -78,7 +73,6 @@ tft.fill_rectangle(x, y, x + 40, y + 40, GREEN)
 x = 88
 tft.draw_glyph(mv, x, y, rows, cols, BLACK, YELLOW)
 
-# Test pixel draw and get
+# Test pixel draw
 for x in range(10, 15):
     tft.draw_pixel(x, 180, YELLOW)
-    print(hex(tft.get_pixel(x, 180)))

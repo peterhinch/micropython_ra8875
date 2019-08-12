@@ -446,6 +446,10 @@ class NoTouch:
             return True
         return False
 
+    def _set_callbacks(self, cb, args):
+        self.callback = cb
+        self.args = args
+
 # Base class for touch-enabled classes.
 class Touchable(NoTouch):
     def __init__(self, location, font, height, width, fgcolor, bgcolor, fontcolor, border, can_drag, value, initial_value):
@@ -455,8 +459,7 @@ class Touchable(NoTouch):
         self.was_touched = False
 
     def _set_callbacks(self, cb, args, cb_end=None, cbe_args=None):
-        self.callback = cb
-        self.args = args
+        super()._set_callbacks(cb, args)
         if cb_end is not None:
             self.cb_end = cb_end
             self.cbe_args = cbe_args
@@ -579,98 +582,77 @@ class LED(NoTouch):
 class Meter(NoTouch):
     def __init__(self, location, *, font=None, height=200, width=30,
                  fgcolor=None, bgcolor=None, pointercolor=None, fontcolor=None,
-                 divisions=10, legends=None, value=0):
-        border = 5 if font is None else 1 + font.height() / 2
+                 divisions=10, legends=None, cb_move=dolittle, cbm_args=[], value=0):
+        border = 5
         super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None)
-        border = self.border # border width
-        self.savebuf = memoryview(bytearray((self.width + 3) * 2))  # 2 bytes per pixel
+        super()._set_callbacks(cb_move, cbm_args)
         self.x0 = self.location[0]
-        self.x1 = self.location[0] + self.width
-        self.y0 = self.location[1] + border + 2
-        self.y1 = self.location[1] + self.height - border
+        self.x1 = self.location[0] + width
+        self.y0 = self.location[1] + border
+        self.y1 = self.location[1] + height - border
         self.divisions = divisions
         self.legends = legends
+        self.ticklen = int(width / 3)
         self.pointercolor = pointercolor if pointercolor is not None else self.fgcolor
         self.ptr_y = None # Invalidate old position
+        # Prevent Label objects being added to display list when already there.
+        self.drawn = False
 
     def show(self):
         tft = self.tft
         width = self.width
-        dx = 5
+        font = self.font
+        fh = self.font.height()
+        fhdelta = fh / 2
+        tl = self.ticklen
         x0 = self.x0
         x1 = self.x1
         y0 = self.y0
         y1 = self.y1
         height = y1 - y0
-        if self.divisions > 0:
-            dy = height / (self.divisions) # Tick marks
-            for tick in range(self.divisions + 1):
-                ypos = int(y0 + dy * tick)
-                tft.draw_hline(x0, ypos, dx, self.fgcolor)
-                tft.draw_hline(x1 - dx, ypos, dx, self.fgcolor)
+        if not self.drawn:
+            self.drawn = True
+            if self.divisions > 0:
+                xs = x0 + 1
+                xe = x1 - 1
+                dy = height / (self.divisions) # Tick marks
+                for tick in range(self.divisions + 1):
+                    ypos = int(y0 + dy * tick)
+                    tft.draw_line(xs, ypos, xe, ypos, self.fgcolor)
 
-        if self.legends is not None and self.font is not None: # Legends
-            if len(self.legends) <= 1:
-                dy = 0
-            else:
-                dy = height / (len(self.legends) -1)
-            yl = self.y1 # Start at bottom
-            for legend in self.legends:
-                print_centered(tft, int(self.x0 + self.width /2), int(yl), legend, self.text_style)
-                yl -= dy
+            if self.legends is not None and font is not None: # Legends
+                if len(self.legends) <= 1:
+                    dy = 0
+                else:
+                    dy = height / (len(self.legends) -1)
+                yl = self.y1 # Start at bottom
+                for legend in self.legends:
+                    # constrain y to vertical extent of widget
+                    loc = (x1 + 4, min(y1 - fh, max(y0, int(yl - fhdelta))))
+                    Label(loc, font = font, fontcolor = self.fontcolor, value = legend)
+                    yl -= dy
 
-        tft = self.tft
-        if self.ptr_y is not None: # Restore background if it was saved
-            tft.restore_region(self.savebuf, x0 - 2, self.ptr_y, x1, self.ptr_y)
-        self.ptr_y = int(self.y1 - self._value * height) # y position of slider
-        tft.save_region(self.savebuf, x0 - 1, self.ptr_y, x1 + 1, self.ptr_y) # Read background
-        tft.draw_hline(x0, self.ptr_y, width, self.pointercolor) # Draw pointer
+        ptr_y = int(y1 - self._value * height) # y position of top of bar
+        if self.ptr_y is None:
+            tft.fill_rectangle(x0 + tl, y0 + 1, x1 - tl, y1 - 1, self.bgcolor)
+            self.ptr_y = ptr_y
+        if ptr_y < self.ptr_y:  # Bar has moved up
+            tft.fill_rectangle(x0 + tl, ptr_y, x1 - tl, self.ptr_y, self.pointercolor)
+        elif ptr_y > self.ptr_y:  # Moved down, blank the area
+            tft.fill_rectangle(x0 + tl, self.ptr_y, x1 - tl, ptr_y, self.bgcolor)
+        self.ptr_y = ptr_y
 
-class MeterFlicker(NoTouch):
-    def __init__(self, location, *, font=None, height=200, width=30,
-                 fgcolor=None, bgcolor=None, pointercolor=None, fontcolor=None,
-                 divisions=10, legends=None, value=0):
-        border = 5 if font is None else 1 + font.height() / 2
-        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None)
-        border = self.border # border width
-        self.x0 = self.location[0]
-        self.x1 = self.location[0] + self.width
-        self.y0 = self.location[1] + border + 2
-        self.y1 = self.location[1] + self.height - border
-        self.divisions = divisions
-        self.legends = legends
-        self.pointercolor = pointercolor if pointercolor is not None else self.fgcolor
-        self.ptr_y = None # Invalidate old position
-
-    def show(self):
-        tft = self.tft
-        width = self.width
-        dx = 5
-        x0 = self.x0
-        x1 = self.x1
-        y0 = self.y0
-        y1 = self.y1
-        height = y1 - y0
-        tft.fill_rectangle(x0 + 1, y0, x1 - 1, y1, self.bgcolor)
-        if self.divisions > 0:
-            dy = height / (self.divisions) # Tick marks
-            for tick in range(self.divisions + 1):
-                ypos = int(y0 + dy * tick)
-                tft.draw_hline(x0, ypos, dx, self.fgcolor)
-                tft.draw_hline(x1 - dx, ypos, dx, self.fgcolor)
-
-        if self.legends is not None and self.font is not None: # Legends
-            if len(self.legends) <= 1:
-                dy = 0
-            else:
-                dy = height / (len(self.legends) -1)
-            yl = self.y1 # Start at bottom
-            for legend in self.legends:
-                print_centered(tft, int(self.x0 + self.width /2), int(yl), legend, self.text_style)
-                yl -= dy
-
-        self.ptr_y = int(self.y1 - self._value * height) # y position of slider
-        tft.draw_hline(x0 + 2, self.ptr_y, x1 - x0 - 4, self.pointercolor) # Draw pointer
+    def color(self, color):
+        if self.pointercolor != color:
+            self.pointercolor = color
+            tl = self.ticklen
+            x0 = self.x0
+            x1 = self.x1
+            y0 = self.y0
+            y1 = self.y1
+            # Blank bar and set .ptr_y to correspond to a value of 0
+            self.tft.fill_rectangle(x0 + tl, y0 + 1, x1 - tl, y1 - 1, self.bgcolor)
+            self.ptr_y = y1
 
 # *********** PUSHBUTTON AND CHECKBOX CLASSES ***********
 
