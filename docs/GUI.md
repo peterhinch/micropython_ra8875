@@ -12,7 +12,8 @@ It should work with any target which supports the Viper code generator.
 
 ![Image](./IMG_2441_small.JPG)
 
-Further images are avaliable [here](./IMAGES.md).
+The `Meter` image shown above is out of date. TBD. Further images are avaliable
+[here](./IMAGES.md).
 
 The library can use the fonts internal to the device and also arbitrary fonts
 converted from `ttf` or `otf` formats using
@@ -67,6 +68,35 @@ If an `ImportError` occurs you will need to install it. Instructions may be
 found [here](https://github.com/peterhinch/micropython-async/blob/master/TUTORIAL.md).
 
 ## 1.1 Installation
+
+### Hardware
+
+The table below is based on the use of a Pyboard 1.x or Pyboard D. The board is
+assumed to be powered by USB or from a source of no more than 5V. With the
+supplied software the
+[Adafruit RA8875 adaptor](https://www.adafruit.com/product/1590) may be wired
+as follows:
+
+| pyboard | RA8875  |
+|:-------:|:-------:|
+| Vin     | VIN     |
+| GND     | GND     |
+| X4      | RST     |
+| X5      | CS      |
+| Y6      | SCK     |
+| Y7      | MISO    |
+| Y8      | MOSI    |
+
+Pins are arbitrary and may be redefined e.g. for non-pyboard targets. The
+`tft_local.py` file must be amended to suit as described below. Use of software
+SPI may incur a performance penalty. The Adafruit adaptor must be powered from
+a voltage in the range 3-5V nominal.
+
+Note from the Adafruit documentation: "The RA8875 does not tri-state the MISO
+pin, it should not share that pin with any other SPI device (including an SD
+card reader) without the use of a 74HC125 or similar."
+
+### Software
 
 This consists of cloning the repo to a PC and copying the directory tree to the
 target hardware. The `docs` subdirectory, `README.md` and `LICENSE.md` may be
