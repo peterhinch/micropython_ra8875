@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.10 Alpha 11th Aug 2019.
+V0.11 Alpha 13th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -136,8 +136,9 @@ must be cross-compiled. The test programs have been run with a standard
 firmware build. If memory problems are encountered Python code (including font
 files) may be implemented as frozen bytecode.
 
-It is also wise to issue ctrl-D to soft reset the Pyboard before importing a
-module which uses the library. The test programs require a ctrl-D before import.
+It is also wise to issue `ctrl-d` to soft reset the Pyboard before importing a
+module which uses the library. The demo programs require a `ctrl-d` before
+import.
 
 ## 1.3 Calibration
 
@@ -157,8 +158,8 @@ these values (x_left, y_left, x_right, y_right), and copy to the device.
 ```python
     tft.calibrate(25, 25, 459, 243)
 ```
-It is then suggested that you run one or more of the demos. Hit ctrl-d to reset
-the board and issue (for example):
+It is suggested that you then run one or more of the demos. Hit `ctrl-d` to
+reset the board and issue (for example):
 ```python
 >>> import micropython_ra8875.demos.hst
 ```
@@ -172,10 +173,11 @@ produce two detections with slightly different coordinates. On some widgets
 this results in slight flicker as the control updates twice. The GUI does not
 use double-click events, but any attempt to detect these would be suspect.
 
+I plan to modify the device driver to reduce this effect.
+
 Secondly reading back the contents of the chip's framebuffer is unreliable. The
-`Slider` and `HorizSlider` controls have been redesigned to remove the need for
-this. The only class to use readback is `Meter`: see the notes on that widget
-for possible consequences.
+`Slider`, `HorizSlider` and `Meter` controls have been redesigned to remove the
+need for this.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -219,7 +221,7 @@ result in tracebacks which implicate the GUI code rather than the buggy user
 code: this is because the GUI runs the callbacks.
 
 All controls and displays have a `tft` property which is the `TFT` instance.
-This enables callbacks to access drawing primitives.
+This enables callbacks to access the driver's graphics primitives.
 
 ## 2.5 Screens
 
@@ -258,7 +260,7 @@ from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import Screen, Button
 
 def quitbutton():
-    def quit(button):
+    def quit(button):  # Callback for button press
         Screen.shutdown()
     Button((109, 107), font = font10, callback = quit, fgcolor = RED,
            text = 'Quit', shape = RECTANGLE)
@@ -268,18 +270,18 @@ class BaseScreen(Screen):
         super().__init__()
         quitbutton()
 setup()  # Initialise hardware, register touchscreen calibration
-Screen.change(BaseScreen)
+Screen.change(BaseScreen)  # Start the GUI
 ```
 
 The last line causes the Screen class to instantiate your `BaseScreen` and to
 start the scheduler using that screen object. Control then passes to the
-scheduler: the code following this line will not run until the GUI is shut down
+scheduler: any code following this line will not run until the GUI is shut down
 and the scheduler is stopped (`Screen.shutdown()`).
 
 ## 3.1 Initialisation
 
-This is performed by `tft_local.py` which instantiates a `TFT` display. This
-class is derived from the driver's `RA8875` class and is documented
+This is performed by `tft_local.py` which instantiates a `TFT` display. The
+`TFT` class is derived from the driver's `RA8875` class. These are documented
 [here](./DRIVER.md).
 
 ###### [Jump to Contents](./GUI.md#contents)
@@ -303,7 +305,7 @@ from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import Screen, Button, Label
 
 def backbutton(x, y):
-    def back(button):
+    def back(button):  # Callbacks may be defined locally as a closure
         Screen.back()
     Button((x, y), font = font10, fontcolor = BLACK, callback = back,
            fgcolor = CYAN,  text = 'Back')
@@ -466,36 +468,37 @@ This displays a single value in range 0.0 to 1.0 on a vertical linear meter.
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
 
-Keyword only arguments:
+Optional keyword only arguments:
  * `height` Dimension of the bounding box. Default 200 pixels.
  * `width` Dimension of the bounding box. Default 30 pixels.
  * `font` Font to use in any legends. Default: `None` No legends will be
  displayed.
- * `legends` A tuple of strings to display on the centreline of the meter.
- These should be short to physically fit. They will appear equidistant along
- the vertical scale, with string 0 at the bottom. Default `None`: no legends
- will be shown.
+ * `legends` A tuple of strings to display as `Label` instances to the right of
+ the meter. They will appear equidistant along the vertical scale, with string
+ 0 at the bottom. Default `None`: no legends will be shown.
  * `divisions` Count of graduations on the meter scale. Default 10.
  * `fgcolor` Color of border. Defaults to system color.
  * `bgcolor` Background color of object. Defaults to system background.
  * `fontcolor` Text color. Defaults to system text color.
- * `pointercolor` Color of meter pointer. Defaults to `fgcolor`.
+ * `barcolor` Color of meter bar. Defaults to `fgcolor`.
+ * `cb_move` Callback function which runs when the value is changed
+ programmatically. Default is a null function.
+ * `cbm_args` A list/tuple of arguments for above callback. Default `[]`.
  * `value` Initial value to display. Default 0.
 
 Methods:
  * `value` Optional argument `val`. If provided, refreshes the meter
  display with a new value. Range 0.0 to 1.0: out of range values will be
  constrained to full scale or 0. Always returns its current value.
+ * `color` Mandatory arg `color` The meter's bar is rendered in the selected
+ color. This supports dynamic color changes  
 
-Note that the `Meter` class reads back the contents of the RA8875 frame buffer.
-This feature of the chip proved unreliable in testing, however in the context
-of the `Meter` class it does appear to work. If problems are experienced the
-GUI provides a functionally identical `MeterFlicker` class which avoids this
-feature; as the name suggests the consequence is a degree of flicker whenever
-the value changes.
+The callback receives an initial arg being the `Meter` instance followed by any
+user supplied args. It can be a bound method, typically of a `Screen` subclass.
+The CB runs before the update is processed, enabling dynamic color change. See
+`demos/hst.py`.
 
 ###### [Jump to Contents](./GUI.md#contents)
-
 
 # 6. Control Classes
 
@@ -532,10 +535,10 @@ Optional keyword only arguments:
  value (typically 2) is provided, a border line will be drawn around the
  control.
  * `cb_end` Callback function which will run when the user stops touching the
- control.
+ control. Default is a null function.
  * `cbe_args` A list/tuple of arguments for above callback. Default `[]`.
  * `cb_move` Callback function which will run when the user moves the slider
- or the value is changed programmatically.
+ or the value is changed programmatically. Default is a null function.
  * `cbm_args` A list/tuple of arguments for above callback. Default `[]`.
  * `value` The initial value. Default 0.0: slider will be at the bottom (v),
  left (h).
@@ -550,6 +553,11 @@ Methods:
  control's value.
  * `color` Mandatory arg `color` The control is rendered in the selected
  color. This supports dynamic color changes  
+
+The callbacks receive an initial arg being the slider instance followed by any
+user supplied args. They can be a bound methods, typically of a `Screen`
+subclass. `cb_move` runs when the value changes but before the update is
+processed, enabling dynamic color change. See `demos/hst.py`.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

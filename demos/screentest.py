@@ -72,7 +72,7 @@ class BackScreen(Screen):
     def on_hide(self):
         print(self.hide_arg)
 
-class ThreadScreen(Screen):
+class TaskScreen(Screen):
     def __init__(self):
         super().__init__()
         Label((0, 0), font = font14, value = 'Green dial runs only')
@@ -83,8 +83,8 @@ class ThreadScreen(Screen):
         self.dial2 = Dial((350, 120), fgcolor = YELLOW, border = 2,  pointers = (0.9, 0.7))
         self.pause = False  # asyncio can't pause coros so handle at application level
         loop = asyncio.get_event_loop()
-        loop.create_task(self.mainthread(self.dial1, True))
-        loop.create_task(self.mainthread(self.dial2))
+        loop.create_task(self.maintask(self.dial1, True))
+        loop.create_task(self.maintask(self.dial2))
 
         fwdbutton(0, 242, BackScreen)
         backbutton(390, 242)
@@ -97,7 +97,7 @@ class ThreadScreen(Screen):
         print('Stop green dial')
         self.pause = True
 
-    async def mainthread(self, dial, can_pause=False):
+    async def maintask(self, dial, can_pause=False):
         angle = 0
         await asyncio.sleep(0)
         while True:
@@ -115,7 +115,7 @@ class BaseScreen(Screen):
         fwdbutton(0, 242, KnobScreen, 'Knobs')
         fwdbutton(100, 242, SliderScreen, 'Sliders')
         fwdbutton(200, 242, AssortedScreen, 'Various')
-        fwdbutton(0, 100, ThreadScreen, 'Threads')
+        fwdbutton(0, 100, TaskScreen, 'Tasks')
         quitbutton(390, 242)
 
 class KnobScreen(Screen):
@@ -135,7 +135,7 @@ class KnobScreen(Screen):
             lstlbl.append(Label((120, 120 + 40 * n), font = font10, **labels))
         lbl_1 = Label((120, 120), font = font10, **labels)
         lbl_2 = Label((120, 160), font = font10, **labels)
-        meter1 = Meter((320, 0), font=font10, legends=('0','5','10'), pointercolor = YELLOW, fgcolor = GREEN, bgcolor=BLACK)
+        meter1 = Meter((320, 0), font=font10, legends=('0','5','10'), barcolor = YELLOW, fgcolor = GREEN, bgcolor=BLACK)
         dial1 = Dial((120, 0), fgcolor = YELLOW, border = 2, pointers = (0.9, 0.7))
         Knob((0, 0), fgcolor = GREEN, bgcolor=(0, 0, 80), color = (168,63,63), border = 2,
             cb_end = self.callback, cbe_args = ['Knob1'], cb_move = self.knob_moved, cbm_args = [dial1, 0, lbl_1, meter1])

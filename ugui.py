@@ -581,7 +581,7 @@ class LED(NoTouch):
 
 class Meter(NoTouch):
     def __init__(self, location, *, font=None, height=200, width=30,
-                 fgcolor=None, bgcolor=None, pointercolor=None, fontcolor=None,
+                 fgcolor=None, bgcolor=None, barcolor=None, fontcolor=None,
                  divisions=10, legends=None, cb_move=dolittle, cbm_args=[], value=0):
         border = 5
         super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, value, None)
@@ -593,7 +593,7 @@ class Meter(NoTouch):
         self.divisions = divisions
         self.legends = legends
         self.ticklen = int(width / 3)
-        self.pointercolor = pointercolor if pointercolor is not None else self.fgcolor
+        self.barcolor = barcolor if barcolor is not None else self.fgcolor
         self.ptr_y = None # Invalidate old position
         # Prevent Label objects being added to display list when already there.
         self.drawn = False
@@ -610,6 +610,10 @@ class Meter(NoTouch):
         y0 = self.y0
         y1 = self.y1
         height = y1 - y0
+        if self.redraw:  # An overlaying screen has closed. Force redraw.
+            self.redraw = False
+            self.drawn = False
+            self.ptr_y = None  # Invalidate previous bar so it's redrawn.
         if not self.drawn:
             self.drawn = True
             if self.divisions > 0:
@@ -635,16 +639,16 @@ class Meter(NoTouch):
         ptr_y = int(y1 - self._value * height) # y position of top of bar
         if self.ptr_y is None:
             tft.fill_rectangle(x0 + tl, y0 + 1, x1 - tl, y1 - 1, self.bgcolor)
-            self.ptr_y = ptr_y
+            self.ptr_y = y1
         if ptr_y < self.ptr_y:  # Bar has moved up
-            tft.fill_rectangle(x0 + tl, ptr_y, x1 - tl, self.ptr_y, self.pointercolor)
+            tft.fill_rectangle(x0 + tl, ptr_y, x1 - tl, self.ptr_y, self.barcolor)
         elif ptr_y > self.ptr_y:  # Moved down, blank the area
             tft.fill_rectangle(x0 + tl, self.ptr_y, x1 - tl, ptr_y, self.bgcolor)
         self.ptr_y = ptr_y
 
     def color(self, color):
-        if self.pointercolor != color:
-            self.pointercolor = color
+        if self.barcolor != color:
+            self.barcolor = color
             tl = self.ticklen
             x0 = self.x0
             x1 = self.x1

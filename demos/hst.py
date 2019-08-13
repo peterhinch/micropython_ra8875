@@ -51,8 +51,8 @@ class SliderScreen(Screen):
                 'font' : font10,
                 }
         quitbutton()
-        meter1 = Meter((320, 0), pointercolor=YELLOW, fgcolor=CYAN, bgcolor=BLACK)
-        meter2 = Meter((360, 0), font=font10, legends=('0','5','10'), pointercolor=GREEN,
+        meter1 = Meter((320, 0), barcolor=YELLOW, fgcolor=CYAN, bgcolor=BLACK)
+        meter2 = Meter((360, 0), font=font10, legends=('0','5','10'), barcolor=GREEN,
                            fgcolor=CYAN, bgcolor=BLACK, cb_move=self.meter_change)
         x = 230
         lstlbl = []
