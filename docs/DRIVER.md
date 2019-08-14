@@ -3,11 +3,20 @@
 This driver provides MicroPython access to a subset of the capabilities of the
 RA8875 chip. The subset was chosen to be close to the minimum functionality
 required to support the touch GUI display. The `ra8875.py` driver provides an
-`RA8875` class.
+`RA8875` class. This is usable for applications other than the GUI and could
+readily be extended to support additional primitives provided by the chip.
 
 The GUI subclasses `RA8875` to provide a `TFT` class. This handles 'greying
 out' of disabled widgets by modifying the colors passed to the superclass
-methods.
+methods. For convenience `TFT` is documented here.
+
+The RA8875 documentation is not the world's best and the chip has bugs. The
+driver was written by referring to a number of sources, notably the Adafruit
+libraries; data values for display control registers were copied from their
+code. Accordingly the use of their displays is highly recommended: other units
+may not be electrically compatible with the driver. See
+[references](./DRIVER.md#4-references) for details of the supported hardware
+and for the sources of information used.
 
 ###### [GUI docs](./GUI.md)
 
@@ -96,15 +105,7 @@ Display methods required for GUI:
  9. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
  10. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
  `x2, y2`.
- 11. `save_region` Args `mv, x1, y1, x2, y2` Copy pixels from the defined
- region in the RA8875 frame buffer into a user supplied buffer. `mv` is a
- `memoryview` into a `bytearray` which must have sufficient capacity to hold 2
- bytes per pixel. See note below.
- 12. `restore_region` Args `mv, x1, y1, x2, y2`. Draw the contents of the user
- supplied buffer passed as a `memoryview`. The data is rendered at a region
- defined by the supplied coordinates. These may differ from those used for the
- save, but the aspect ratio must be unchanged.
- 13. `draw_glyph` Args `mv, x, y, rows, cols, fgcolor, bgcolor` The `mv` arg is
+ 11. `draw_glyph` Args `mv, x, y, rows, cols, fgcolor, bgcolor` The `mv` arg is
  a `memoryview` into a `bytes` object holding a glyph bitmap. The bitmap uses
  one bit per pixel as a horizontally mapped array. It is rendered at `x, y` and
  the glyph is organised as `rows, cols`. Rendering uses the supplied foreground
@@ -123,14 +124,7 @@ Additional methods:
  2. `width` No args. Return display width in pixels.
  3. `height` No args. Return display height in pixels.
  4. `draw_pixel` Args `x, y, color` draw a single pixel.
- 5. `get_pixel` Args `x, y` Return the RGB565 value of a pixel.
 
-### save_region
-
-Note that the `save_region` method is not guaranteed to work reliably: in my
-testing the chip does not return deterministic data. It seems to work well
-enough for the `Meter` control, but the `Slider` controls did not work well
-and have been rewritten to avoid using this feature.
 
 ### Calibration
 
@@ -140,3 +134,32 @@ and bottom right of the display. The code in `tft_local.py` is modified to call
 
 This ensures that the GUI acquires corrected coordinates from the touch panel.
 
+# 3. Chip limitations
+
+The RA8875 touch interface has an unexpected behaviour. A single brief touch
+always appears as at least two touch events with different coordinates. The
+last of these seems to be the correct one (subject to calibration). The driver
+makes no attempt to mitigate this. The setting of the debounce bit had no
+evident effect on this behaviour.
+
+The RA8875 claims to provide a means of reading back the contents of the frame
+buffer. This seems broken. I removed functionality which aimed to support it as
+the outcome was not deterministic.
+
+# 4. References
+
+[CircuitPython library](https://github.com/adafruit/Adafruit_CircuitPython_RA8875)
+written by Melissa LeBlanc-Williams for Adafruit Industries.
+[Arduino library](https://github.com/adafruit/Adafruit_RA8875) written by
+Limor Fried/Ladyada for Adafruit Industries.
+[Datasheet](https://cdn-shop.adafruit.com/datasheets/RA8875_DS_V19_Eng.pdf)
+[App note](https://cdn-shop.adafruit.com/datasheets/ra8875+app+note.pdf)
+
+[This driver](https://github.com/sumotoy/RA8875/blob/0.70/RA8875.cpp) by Max Mc
+Costa.
+
+Supported hardware
+
+[Controller board](https://www.adafruit.com/product/1590)  
+[4.3 inch display](https://www.adafruit.com/product/1591)  
+[7 inch display](https://www.adafruit.com/product/2354)

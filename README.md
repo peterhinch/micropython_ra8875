@@ -17,10 +17,11 @@ the context of the GUI and typical machine control and sensor display
 applications, visual performance in handling updates is good. When drawing a
 complete screen there is a visible lag notably on text-heavy screens.
 
-The GUI is targeted at hardware control and display applications. GUI objects
-are drawn using graphics primitives rather than by rendering bitmap images.
-This takes advantage of the RA8875 hardware rendering of graphics primitives
-and ensures that controls are scalable. The API is via event driven callbacks.
+The GUI is targeted at hardware control and sensor display applications. GUI
+objects are drawn using graphics primitives rather than by rendering bitmap
+images. This takes advantage of the RA8875 hardware rendering of graphics
+primitives and ensures that controls are scalable. The API is via event driven
+callbacks.
 
 The GUI uses `uasyncio` for scheduling and has been tested on Pyboard V1.1 and
 on Pyboard D. Supported hardware from Adafruit:

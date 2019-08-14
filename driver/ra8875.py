@@ -401,9 +401,7 @@ class RA8875:
 
     # Is fresh touch data available?
     def ready(self):
-        if self._touch_data is None:
-            return False  # Data not yet ready
-        return self._read_reg(0xf1) & 0x04  # Check interrupt
+        return self._touch_data is not None
 
     # Is screen currently being touched?
     # Reading MSB of reg 0x74 doesn't work, nor does reading status register.
@@ -414,9 +412,11 @@ class RA8875:
 
     # Caller tests for .ready() before calling.
     def get_touch(self):  # Read data and invalidate ready
-        self._write_reg(0xf1, 0x04)  # Clear interrupt
-        d = self._touch_data
-        self._touch_data = None
+        d = None
+        if self._touch_data is not None:
+            self._write_reg(0xf1, 0x04)  # Clear interrupt
+            d = self._touch_data
+            self._touch_data = None
         return d
 
     # Given raw touch values return calibrated values guaranteed to lie
@@ -444,8 +444,6 @@ class RA8875:
                 # Convert to screen coords
                 x = ((self._read_reg(0x72) << 2) | lx) * self._width >> 10
                 y = ((self._read_reg(0x73) << 2) | ly) * self._height >> 10
-                if self._calibrated:
-                    self._touch_data = self._tdata(x, y)
-                else:  # Return raw data which can go out of range so user can calibrate
-                    self._touch_data = x, y
+                # If uncalibrated return raw data so user can calibrate
+                self._touch_data = self._tdata(x, y) if self._calibrated else (x, y)
             await asyncio.sleep_ms(30)

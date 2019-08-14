@@ -213,7 +213,7 @@ class Graph():
         self.curves.add(curve)
 
     def clear(self):
-        tft = Screen.get_tft()
+        tft = Screen.tft
         self.curves = set()
         tft.fill_rectangle(self.x0, self.y0, self.x1, self.y1, self.bgcolor)
         self.show()

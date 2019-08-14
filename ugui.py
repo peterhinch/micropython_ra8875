@@ -74,8 +74,9 @@ def desaturate(color, factor): # Desaturate and dim
 # Some TFT methods call drawHLine and drawVLine: the bound variable 'raw` forces them
 # to use the color of the calling method
 class TFT(RA8875):
-    def __init__(self, spi, pincs, pinrst, width, height, loop):
+    def __init__(self, spi, pincs, pinrst, width, height, tdelay, loop):
         super().__init__(spi, pincs, pinrst, width, height, loop)
+        self.tdelay = tdelay  # Touch mode
         self._is_grey = False
         self._desaturate = True
         self._greyfunc = desaturate
@@ -184,9 +185,8 @@ class Screen:
         cls.objtouch = objtouch if objtouch is not None else tft
         cls.tft = tft
 
-# get_tft() when called from user code, ensure greyed_out status is updated.
     @classmethod
-    def get_tft(cls, greyed_out=False):
+    def _get_tft(cls, greyed_out=False):
         cls.tft.usegrey(greyed_out)
         return cls.tft
 
@@ -260,23 +260,35 @@ class Screen:
         self.touchlist = []
         self.displaylist = []
         self.modal = False
-        if Screen.current_screen is None: # Initialising class and thread
+        if Screen.current_screen is None: # Initialising class and task
             loop = asyncio.get_event_loop()
-            loop.create_task(self._touchtest()) # One thread only
+            loop.create_task(self._touchtest()) # One task only
             loop.create_task(self._garbage_collect())
         Screen.current_screen = self
         self.parent = None
 
-    async def _touchtest(self): # Singleton thread tests all touchable instances
-        touch_panel = Screen.objtouch
+
+    async def _touchtest(self): # Singleton task tests all touchable instances
+        td = Screen.tft.tdelay  # Delay in ms (0 is normal mode)
+        tp = Screen.objtouch  # touch panel instance
+        x = 0  # Current touch coords
+        y = 0
+        def dotouch():
+            for obj in Screen.current_screen.touchlist:
+                if obj.visible and not obj.greyed_out():
+                    obj._trytouch(x, y)
+        if td:
+            tdelay = Delay_ms(func = dotouch, duration = td)
         while True:
             await asyncio.sleep_ms(0)
-            if touch_panel.ready():
-                x, y = touch_panel.get_touch()
-                for obj in Screen.current_screen.touchlist:
-                    if obj.visible and not obj.greyed_out():
-                        obj._trytouch(x, y)
-            elif not touch_panel.touched():
+            if tp.ready():
+                x, y = tp.get_touch()
+                if td:
+                    if not tdelay():
+                        tdelay.trigger()
+                else:
+                    dotouch()  # Process immediately
+            elif not tp.touched():
                 for obj in Screen.current_screen.touchlist:
                     if obj.was_touched:
                         obj.was_touched = False # Call _untouched once only
@@ -285,7 +297,7 @@ class Screen:
 
     def _do_open(self, old_screen): # Aperture overrides
         show_all = True
-        tft = Screen.get_tft()
+        tft = Screen._get_tft()
 # If opening a Screen from an Aperture just blank and redraw covered area
         if old_screen.modal:
             show_all = False
@@ -326,7 +338,7 @@ class Aperture(Screen):
         self.width = width
         self.draw_border = draw_border
         self.modal = True
-        tft = Screen.get_tft()
+        tft = Screen._get_tft()
         self.fgcolor = fgcolor if fgcolor is not None else tft.get_fgcolor()
         self.bgcolor = bgcolor if bgcolor is not None else tft.get_bgcolor()
 
@@ -334,7 +346,7 @@ class Aperture(Screen):
         return (self.location[0] + x, self.location[1] + y)
 
     def _do_open(self, old_screen):
-        tft = Screen.get_tft()
+        tft = Screen._get_tft()
         x, y = self.location[0], self.location[1]
         tft.fill_rectangle(x, y, x + self.width, y + self.height, self.bgcolor)
         if self.draw_border:
@@ -370,7 +382,7 @@ class NoTouch:
         self.width = width
         self.fill = bgcolor is not None
         self.visible = True # Used by ButtonList class for invisible buttons
-        tft = Screen.get_tft(False) # Not greyed out
+        tft = Screen._get_tft(False) # Not greyed out
         if font is None:
             self.font = tft.text_font
         else:
@@ -402,7 +414,7 @@ class NoTouch:
 
     @property
     def tft(self):
-        return Screen.get_tft(self._greyed_out)
+        return Screen._get_tft(self._greyed_out)
 
     def greyed_out(self):
         return self._greyed_out # Subclass may be greyed out

@@ -37,7 +37,7 @@ class ButtonScreen(Screen):
             {'fgcolor' : GREEN, 'text' : 'Yes', 'args' : ('Oui', 2), 'fontcolor' : (0, 0, 0)},
             {'fgcolor' : RED, 'text' : 'No', 'args' : ('Non', 2)},
             {'fgcolor' : BLUE, 'text' : '???', 'args' : ('Que?', 2), 'fill': False},
-            {'fgcolor' : GREY, 'text' : 'Rats', 'args' : ('Rats', 2), 'shape' : CLIPPED_RECT,},
+            {'fgcolor' : GREY, 'text' : 'Rats', 'args' : ('Rats', 2)},
         ]
 # Highlight buttons: only tabulate data that varies
         table_highlight = [
@@ -78,7 +78,7 @@ class ButtonScreen(Screen):
 # Button assortment
         x = 0
         for t in table:
-            Button((x, 0), font = font14, callback = self.callback, **t)
+            Button((x, 0), font = font14, shape = CIRCLE, callback = self.callback, **t)
             x += 70
 
 # Highlighting buttons

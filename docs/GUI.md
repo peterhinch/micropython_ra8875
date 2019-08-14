@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.11 Alpha 13th Aug 2019.
+V0.12 Alpha 14th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -10,16 +10,18 @@ has not been tested.
 
 It should work with any target which supports the Viper code generator.
 
-![Image](./IMG_2441_small.JPG)
+![Image](./dials.JPG)
 
-The `Meter` image shown above is out of date. TBD. Further images are avaliable
-[here](./IMAGES.md).
+This shows some of the widgets provided. Further images may be seen
+[here](./IMAGES.md). Color rendition in the image is not good: in practice
+colors are clear and vibrant.
 
-The library can use the fonts internal to the device and also arbitrary fonts
-converted from `ttf` or `otf` formats using
-[font_to_py.py](https://github.com/peterhinch/micropython-font-to-py.git).
+The library uses arbitrary fonts converted from `ttf` or `otf` formats using
+[font_to_py.py](https://github.com/peterhinch/micropython-font-to-py.git). Two
+samples are provided.
 
-An extension for plotting simple graphs is described [here](./LPLOT.md).
+An extension for plotting simple graphs is provided and is described
+[here](./LPLOT.md).
 
 # Contents
 
@@ -56,6 +58,7 @@ An extension for plotting simple graphs is described [here](./LPLOT.md).
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
 8. [Fonts](./GUI.md#8-fonts)  
 9. [References](./GUI.md#9-references)  
+10. [Known bugs and possible enhancements](./GUI.md#10-known-bugs-and-possible-enhancements)  
 
 # 1. Getting started
 
@@ -77,7 +80,7 @@ supplied software the
 [Adafruit RA8875 adaptor](https://www.adafruit.com/product/1590) may be wired
 as follows:
 
-| pyboard | RA8875  |
+| Pyboard | RA8875  |
 |:-------:|:-------:|
 | Vin     | VIN     |
 | GND     | GND     |
@@ -98,10 +101,10 @@ card reader) without the use of a 74HC125 or similar."
 
 ### Software
 
-This consists of cloning the repo to a PC and copying the directory tree to the
-target hardware. The `docs` subdirectory, `README.md` and `LICENSE.md` may be
-omitted to conserve space. For example, using the
-[rshell utility](https://github.com/dhylands/rshell) and assuming a Pyboard D
+Installation consists of cloning the repo to a PC and copying the directory
+tree to the target hardware. The `docs` subdirectory, `README.md` and
+`LICENSE.md` may be omitted to conserve space. For example, using the
+[rshell utility](https://github.com/dhylands/rshell) and assuming a Pyboard
 whose filesystem is under `/flash`:
 ```
 $ git clone https://github.com/peterhinch/micropython_ra8875.git
@@ -111,16 +114,42 @@ $ rm micropython_ra8875/LICENSE.md
 $ rshell cp -r micropython_ra8875/ /flash
 ```
 
-Owing to the size of the library and depending on the size of your application
-it may be necessary to freeze modules as bytecode. Users should therefore be
-familiar with building Micropython from source, and installing Python modules
-as persistent bytecode. Instructions on doing this may be found
-[here](http://forum.micropython.org/viewtopic.php?f=6&t=1776). In essence it
-involves copying the required directory structure to a directory on your PC,
-compiling a build and installing it.
+### Testing
 
-Familiarity with callbacks and event driven programming will assist in developing
-applications.
+Copy the following and paste at the REPL (ctrl-e, ctrl-shift-v, ctrl-d).
+
+```python
+from micropython_ra8875.ugui import Screen, Button
+from micropython_ra8875.tft_local import setup
+import micropython_ra8875.support.font10 as font10
+from micropython_ra8875.support.constants import *
+
+def quitbutton():
+    def quit(button):
+        Screen.shutdown()
+    Button((109, 107), font = font10, callback = quit, fgcolor = RED,
+           text = 'Quit', shape = RECTANGLE)
+
+class BaseScreen(Screen):
+    def __init__(self):
+        super().__init__()
+        quitbutton()
+setup()
+Screen.change(BaseScreen)
+```
+Depending on the target you may get a memory error. This indicates that the
+target has too little RAM to compile `ugui.py`. The first approach to fixing
+this is to cross compile the file. Clone the MicroPython repo to your PC, and
+run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
+resultant `ugui.mpy` to the target and delete the target's `ugui.py`.
+If this doesn't solve the problem the solution is to compile the directory tree
+as frozen bytecode. Instructions on doing this may be found
+[here](http://forum.micropython.org/viewtopic.php?f=6&t=1776). In essence it
+involves copying the directory tree to a directory on your PC, compiling a
+build and installing it.
+
+Note that the 'Quit' button will probably respond to a touch not coincident
+with it: this is because the touchpanel is uncalibrated at this stage.
 
 ## 1.2 Python files
 
@@ -160,19 +189,12 @@ Demo programs in the `demos` subdirectory:
  6. `dialog.py` Modal dialog boxes.
  7. `pt.py` Plot test.
 
-By the standards of the Pyboard this is a large library. The `ugui.py`
-program is too large to be compiled on-board (unless using a Pyboard D) and
-must be cross-compiled. The test programs have been run with a standard
-firmware build. If memory problems are encountered Python code (including font
-files) may be implemented as frozen bytecode.
-
-It is also wise to issue `ctrl-d` to soft reset the Pyboard before importing a
-module which uses the library. The demo programs require a `ctrl-d` before
-import.
+It is wise to issue `ctrl-d` to soft reset the target before importing a module
+which uses the library. The demo programs require a `ctrl-d` before import.
 
 ## 1.3 Calibration
 
-The touchpanel requires calibration to achieve sufficient accuracy for the GUI.
+The touch panel requires calibration to achieve sufficient accuracy for the GUI.
 This is done by issuing
 ```python
 >>> import micropython_ra8875.driver.cal
@@ -199,11 +221,13 @@ Documentation references e.g. for the device driver may be found in
 ## 1.4 RA8875 issues
 
 The RA8875 has a couple of limitations. In my testing touch events always
-produce two detections with slightly different coordinates. On some widgets
-this results in slight flicker as the control updates twice. The GUI does not
-use double-click events, but any attempt to detect these would be suspect.
+produce two or more detections with slightly different coordinates. On some
+widgets this results in flicker as the control updates multiple times. The GUI
+does not use double-click events: any attempt to detect these would be suspect.
 
-I plan to modify the device driver to reduce this effect.
+The `tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
+delay in ms, normally 0. A higher value (say 200) mitigates this at the cost of
+slowing the response to touches.
 
 Secondly reading back the contents of the chip's framebuffer is unreliable. The
 `Slider`, `HorizSlider` and `Meter` controls have been redesigned to remove the
@@ -212,6 +236,9 @@ need for this.
 ###### [Jump to Contents](./GUI.md#contents)
 
 # 2. Concepts
+
+Familiarity with callbacks and event driven programming will assist in
+developing applications.
 
 ## 2.1 Terminology
 
@@ -263,7 +290,7 @@ demonstrated in `screentest.py`.
 
 Applications should be designed with a `Screen` subclass for each of the
 application's screens (even if the app uses only a single screen). This
-faciitates sharing data between GUI objects on a screen, and simplifies the
+facilitates sharing data between GUI objects on a screen, and simplifies the
 handling of control callbacks. These will be methods bound to the user screen.
 They can access the screen's bound variables via `self` and the control's
 bound methods via the callback's first argument (which is a reference to the
@@ -284,10 +311,10 @@ The `Screen` class is configured in `tft_local.py`.
 
 The following illustrates the structure of a minimal program:
 ```python
+from micropython_ra8875.ugui import Screen, Button
 from micropython_ra8875.tft_local import setup
 import micropython_ra8875.support.font10 as font10
-from micropython_ra8875.support.constants import *
-from micropython_ra8875.ugui import Screen, Button
+from micropython_ra8875.support.constants import *  # colors and shapes
 
 def quitbutton():
     def quit(button):  # Callback for button press
@@ -307,6 +334,9 @@ The last line causes the Screen class to instantiate your `BaseScreen` and to
 start the scheduler using that screen object. Control then passes to the
 scheduler: any code following this line will not run until the GUI is shut down
 and the scheduler is stopped (`Screen.shutdown()`).
+
+If the `uasyncio` event loop is to be instantiated with non-default arguments
+this should be done before calling `setup`.
 
 ## 3.1 Initialisation
 
@@ -335,7 +365,7 @@ from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import Screen, Button, Label
 
 def backbutton(x, y):
-    def back(button):  # Callbacks may be defined locally as a closure
+    def back(button):  # A callback defined locally
         Screen.back()
     Button((x, y), font = font10, fontcolor = BLACK, callback = back,
            fgcolor = CYAN,  text = 'Back')
@@ -386,12 +416,11 @@ In normal use the following methods only are required:
  will result if `factor` is <= 1. The default style is to desaturate and dim
  by a factor of 2.
 
-Other method:  
- * `get_tft` Return the `TFT` instance. This allows direct drawing to
- the physical screen. Anything so drawn will be lost when the screen is
- changed. In normal use the `TFT` instance is acquired via a GUI object's `tft`
- property. The `TFT` class provides access to graphics primitives and is
- documented [here](./DRIVER.md).
+Class variable:  
+ * `tft` Returns the `TFT` instance. This instance allows direct drawing to the
+ physical screen. The `TFT` class provides access to graphics primitives and is
+ documented [here](./DRIVER.md). Anything so drawn will be lost when the screen
+ is changed. 
 
 See `demos/pt.py` and `demos/screentest.py` for examples of multi-screen
 design.
@@ -402,7 +431,7 @@ This takes no arguments.
 
 ## 4.3 Callback Methods
 
-By default these do nothing; they may be defined in subclasses if required.
+These are null functions which may be redefined in user subclasses.
 
  * `on_open` Called when a screen is instantiated but prior to display.
  * `after_open` Called after a screen has been displayed.
@@ -470,7 +499,7 @@ Method:
 
 ## 5.3 Class LED
 
-Displays a boolean state. Can display other information by varying the color.
+Displays a Boolean state. Can display other information by varying the color.
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -484,7 +513,7 @@ Keyword only arguments (all optional):
  * `color` The color of the LED. Default RED.
 
 Methods:
- * `value` Argument `val` boolean, default `None`. If provided, lights or
+ * `value` Argument `val` Boolean, default `None`. If provided, lights or
  extinguishes the LED. Always returns its current state.
  * `color` Argument `color`. Change the LED color without altering its
  state.
@@ -574,7 +603,7 @@ Optional keyword only arguments:
  left (h).
 
 Methods:
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
  * `value` Optional arguments `val` (default `None`). If supplied the
@@ -620,7 +649,7 @@ Optional keyword only arguments:
  counter-clockwise position.
 
 Methods:
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
  * `value` Optional argument `val`. If set, adjusts the pointer to
@@ -631,7 +660,7 @@ Methods:
 
 ## 6.3 Class Checkbox
 
-This provides for boolean data entry and display. In the `True` state the
+This provides for Boolean data entry and display. In the `True` state the
 control can show an 'X' or a filled block of any color.
 
 Constructor mandatory positional argument:
@@ -652,10 +681,10 @@ Optional keyword only arguments:
  * `value` Initial value. Default `False`.
 
 Methods:
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
- * `value` Optional boolean argument `val`. If the provided value does not
+ * `value` Optional Boolean argument `val`. If the provided value does not
  correspond to the control's current value, updates it; the checkbox is
  re-drawn and the callback executed. Always returns the control's value.
 
@@ -674,7 +703,7 @@ Mandatory keyword only argument:
  * `font` Font for button text
 
 Optional keyword only arguments:
- * `shape` CIRCLE, RECTANGLE or CLIPPED_RECT. Default RECTANGLE.
+ * `shape` Must be `CIRCLE`, `RECTANGLE` or `CLIPPED_RECT`. Default `RECTANGLE`.
  * `height` Height of the bounding box. Default 50 pixels.
  * `width` Width of the bounding box. Default 50 pixels.
  * `fill` Boolean. If `True` the button will be filled with the current
@@ -695,7 +724,7 @@ Optional keyword only arguments:
  * `lp_args` A list/tuple of arguments for above callback. Default `[]`.
 
 Method:
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
 
@@ -727,7 +756,7 @@ Methods:
  * `add_button` Adds a button to the `ButtonList`. Arguments: as per the
  `Button` constructor.
  Returns the button object.
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
  * `value` Optional argument: a button in the set. If supplied and the button
@@ -764,7 +793,7 @@ Constructor positional arguments:
 Methods:
  * `add_button` Adds a button. Arguments: as per the `Button` constructor.
  Returns the Button instance.
- * `greyed_out` Optional boolean argument `val` default `None`. If
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
  * `value` Optional argument: a button in the set. If supplied, and the
@@ -830,7 +859,8 @@ Methods:
  returned.
 
 The callback is triggered whenever a listbox item is pressed, even if that item
-is already currently selected.
+is already currently selected. Its first argument is the listbox instance
+followed by any args specified to the constructor.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -872,7 +902,8 @@ Methods:
  returned.
 
 The callback is triggered if an item on the dropdown list is touched and that
-item is not currently selected (i.e. when a change occurs).
+item is not currently selected (i.e. when a change occurs). Its first argument
+is the dropdown instance followed by any args specified to the constructor.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -981,3 +1012,21 @@ Other references:
 [uasyncio libraries and notes](https://github.com/peterhinch/micropython-async)  
 
 ###### [Jump to Contents](./GUI.md#contents)
+
+# 10. Known bugs and possible enhancements
+
+### Bugs
+
+If a control's color is changed in code and the control is subsequently
+disabled and re-enabled, the border is rendered in the changed color. Its color
+should remain as originally drawn.
+
+### Enhancements
+
+Implement a vector display object similar to that in
+[nano-gui](https://github.com/peterhinch/micropython-nano-gui.git).
+
+Try to improve the handling of the spurious touch events from the hardware to
+reduce flicker.
+
+

@@ -1,7 +1,7 @@
 # Sample Images
 
-These are based on the 4.3 inch display. Images are out of date with respect to
-the `Meter` control whose appearance has changed.
+These are based on the 4.3 inch display. Color rendition in these images is not
+particularly good: in practice colors are clear and vibrant.
 
 ###### [GUI docs](./GUI.md)
 
@@ -17,7 +17,11 @@ the `Meter` control whose appearance has changed.
 
 ![Horizontal sliders](./horiz_slider.JPG)
 
-# Rotary controls and displays
+Widget colors can change dynamically.
+
+![Horizontal sliders](./horiz_slider_2.JPG)
+
+# Rotary controls, dropdown lists and listboxes
 
 ![Dials](./dials.JPG)
 
@@ -27,7 +31,7 @@ the `Meter` control whose appearance has changed.
 
 # Plot Module
 
-These images are of a proof-of-concept of using the Pyboard to generate a sine
+These images were a proof-of-concept of using the Pyboard to generate a sine
 wave and using the ADC's to read the response of the network under test.
 
 ## Control Panel

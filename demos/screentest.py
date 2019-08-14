@@ -231,7 +231,7 @@ class AssortedScreen(Screen):
         bs0 = None
         for t in buttonlist: # Buttons overlay each other at same location
             t['args'].append(lstlbl[2])
-            button = bs.add_button((x, 120), font = font14, fontcolor = BLACK, **t)
+            button = bs.add_button((x, 120), font = font14, height=30, fontcolor = BLACK, **t)
             if bs0 is None:
                 bs0 = button
 # Radio buttons
