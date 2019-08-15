@@ -60,14 +60,6 @@ def print_left(tft, x, y, s, style):
     tft.text_style(style)
     tft.print_string(s, x, y)
 
-def dim(color, factor): # Dim a color
-    if color is not None:
-        return tuple(int(x / factor) for x in color)
-
-def desaturate(color, factor): # Desaturate and dim
-    if color is not None:
-        f = int(max(color) / factor)
-        return (f, f, f)
 
 # *********** TFT CLASS ************
 # Subclass TFT to enable greying out of controls
@@ -77,15 +69,14 @@ class TFT(RA8875):
     def __init__(self, spi, pincs, pinrst, width, height, tdelay, loop):
         super().__init__(spi, pincs, pinrst, width, height, loop)
         self.tdelay = tdelay  # Touch mode
-        self._is_grey = False
-        self._desaturate = True
-        self._greyfunc = desaturate
-        self._factor = 2 # Default grey-out methd: dim colors
+        self._is_grey = False  # Not greyed-out
+        self.dim(2)  # Default grey-out: dim colors by factor of 2
+        self.desaturate(True)
         self.fgcolor = WHITE
         self.bgcolor = BLACK
-        self.text_fgcolor = self.fgcolor # colors set by user
+        self.text_fgcolor = self.fgcolor  # colors set by user
         self.text_bgcolor = self.bgcolor
-        self.text_fgc = self.fgcolor    # colors used by text rendering allowing for grey status
+        self.text_fgc = self.fgcolor  # colors used by text rendering allowing for grey status
         self.text_bgc = self.bgcolor
         self.text_font = None
 
@@ -131,8 +122,16 @@ class TFT(RA8875):
     def desaturate(self, value=None):
         if value is not None:  # Pass a bool to specify desat or dim
             self._desaturate = value  # Save so it can be queried
-            # Specify the global function
-            self._greyfunc = desaturate if value else dim
+            def do_dim(color, factor): # Dim a color
+                if color is not None:
+                    return tuple(int(x / factor) for x in color)
+
+            def do_desat(color, factor): # Desaturate and dim
+                if color is not None:
+                    f = int(max(color) / factor)
+                    return (f, f, f)
+            # Specify the local function
+            self._greyfunc = do_desat if value else do_dim
         return self._desaturate
 
     def dim(self, factor=None):
@@ -407,6 +406,7 @@ class NoTouch:
 
         self.text_style = tft.text_style((self.fontcolor, self.fontbg, self.font))
         self.border = 0 if border is None else int(max(border, 0)) # width
+        self.bdcolor = self.fgcolor  # Border is always drawn in original fgcolor
         self.callback = dolittle # Value change callback
         self.args = []
         self.cb_end = dolittle # Touch release callbacks
@@ -445,8 +445,8 @@ class NoTouch:
             y = self.location[1]
             if self.fill:
                 tft.fill_rectangle(x, y, x + self.width, y + self.height, self.bgcolor)
-            if self.border > 0: # Draw a bounding box
-                tft.draw_rectangle(x, y, x + self.width, y + self.height, self.fgcolor)
+            if self.border > 0:  # Draw a bounding box in original fgcolor
+                tft.draw_rectangle(x, y, x + self.width, y + self.height, self.bdcolor)
         return self.border # border width in pixels
 
     def overlaps(self, xa, ya, xb, yb): # Args must be sorted: xb > xa and yb > ya

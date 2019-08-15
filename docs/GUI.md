@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.12 Alpha 14th Aug 2019.
+V0.13 Beta 15th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -58,7 +58,7 @@ An extension for plotting simple graphs is provided and is described
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
 8. [Fonts](./GUI.md#8-fonts)  
 9. [References](./GUI.md#9-references)  
-10. [Known bugs and possible enhancements](./GUI.md#10-known-bugs-and-possible-enhancements)  
+10. [Possible enhancements](./GUI.md#10-possible-enhancements)  
 
 # 1. Getting started
 
@@ -139,8 +139,9 @@ Screen.change(BaseScreen)
 ```
 Depending on the target you may get a memory error. This indicates that the
 target has too little RAM to compile `ugui.py`. The first approach to fixing
-this is to cross compile the file. Clone the MicroPython repo to your PC, and
-run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
+this is to cross compile the file. Clone the
+[MicroPython repo](https://github.com/micropython/micropython.git) to your PC,
+and run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
 resultant `ugui.mpy` to the target and delete the target's `ugui.py`.
 If this doesn't solve the problem the solution is to compile the directory tree
 as frozen bytecode. Instructions on doing this may be found
@@ -168,8 +169,8 @@ Device driver in the `driver` subdirectory:
 
 Support files in the `support` subdirectory:
  1. `constants.py` Constants such as colors and shapes.
- 2. `asyn.py` Synchronisation primitives.
- 3. `aswitch.py` Provides a `Delay_ms` class for retriggerable delays.
+ 2. `asyn.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
+ 3. `aswitch.py` Has a `Delay_ms` class for retriggerable delays. From above.
  4. `font10.py` Fonts used by the demo programs.
  5. `font14.py` Ditto. These are generated from the free font `FreeSans.ttf`.
 
@@ -1013,20 +1014,15 @@ Other references:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-# 10. Known bugs and possible enhancements
-
-### Bugs
-
-If a control's color is changed in code and the control is subsequently
-disabled and re-enabled, the border is rendered in the changed color. Its color
-should remain as originally drawn.
-
-### Enhancements
+# 10. Possible enhancements
 
 Implement a vector display object similar to that in
 [nano-gui](https://github.com/peterhinch/micropython-nano-gui.git).
 
 Try to improve the handling of the spurious touch events from the hardware to
 reduce flicker.
+
+Consider implementing internal fonts on the RA8875 to improve rendering speed.
+
 
 
