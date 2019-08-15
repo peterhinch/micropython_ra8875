@@ -57,8 +57,9 @@ An extension for plotting simple graphs is provided and is described
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
 8. [Fonts](./GUI.md#8-fonts)  
-9. [References](./GUI.md#9-references)  
-10. [Possible enhancements](./GUI.md#10-possible-enhancements)  
+9. [Memory issues](./GUI.md#9-memory-issues)  
+10. [References](./GUI.md#10-references)  
+11. [Possible enhancements](./GUI.md#11-possible-enhancements)  
 
 # 1. Getting started
 
@@ -138,16 +139,8 @@ setup()
 Screen.change(BaseScreen)
 ```
 Depending on the target you may get a memory error. This indicates that the
-target has too little RAM to compile `ugui.py`. The first approach to fixing
-this is to cross compile the file. Clone the
-[MicroPython repo](https://github.com/micropython/micropython.git) to your PC,
-and run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
-resultant `ugui.mpy` to the target and delete the target's `ugui.py`.
-If this doesn't solve the problem the solution is to compile the directory tree
-as frozen bytecode. Instructions on doing this may be found
-[here](http://forum.micropython.org/viewtopic.php?f=6&t=1776). In essence it
-involves copying the directory tree to a directory on your PC, compiling a
-build and installing it.
+target has too little RAM to compile `ugui.py`. See
+[section 9](./GUI.md#9-memory-issues) for solutions to this.
 
 Note that the 'Quit' button will probably respond to a touch not coincident
 with it: this is because the touchpanel is uncalibrated at this stage.
@@ -1000,7 +993,39 @@ argument should be employed. The resultant Python file may be imported and
 the module passed to the constructor of GUI objects. These files may be
 frozen as bytecode to radically reduce RAM usage.
 
-# 9. References
+# 9. Memory issues
+
+When a Python file is imported the MicroPython compiler converts the code to
+bytecode. This process requires RAM: on smaller targets compilation of large
+files such as `ugui.py` can fail. MicroPython has a cross compiler which runs
+on a PC and converts the Python source to a bytecode file with a `.mpy`
+extension. This may be copied to the target, eliminating the need for local
+compilation.
+
+To do this clone the
+[MicroPython repo](https://github.com/micropython/micropython.git) to your PC,
+and run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
+resultant `ugui.mpy` to the target's `micropython_ra8875` directory and delete
+the directory's `ugui.py`.
+
+On some targets this may still not save sufficient RAM: the `.mpy` file needs
+to be loaded into RAM in order to run. MicroPython supports a means of
+compiling Python code into a firmware build. In this instance the bytecode is
+executed from flash memory rather than RAM. This concept is known as "frozen
+bytecode".
+
+Instructions on doing this may be found
+[here](http://forum.micropython.org/viewtopic.php?f=6&t=1776). In essence it
+involves copying the directory tree to a directory on your PC, compiling a
+build and installing it.
+
+In my testing the device driver was not frozen successfully, probably because
+it uses the native and viper code emitters. I froze the files in the root
+directory and the `demos` and `support` subdirectories. On the target's
+filesystem I created the `micropython_ra8875` directory and its `driver`
+subdirectory and copied the contents into there. This was successful.
+
+# 10. References
 
 Documentation for the underlying libraries may be found at these sites.  
 
@@ -1014,7 +1039,7 @@ Other references:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-# 10. Possible enhancements
+# 11. Possible enhancements
 
 Implement a vector display object similar to that in
 [nano-gui](https://github.com/peterhinch/micropython-nano-gui.git).
