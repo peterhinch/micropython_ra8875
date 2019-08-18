@@ -58,9 +58,10 @@ tft.draw_line(x, y + 50, x + 50, y, GREEN)
 
 
 # Render a glyph and measure performance.
+x = 100
+tft.draw_str('Measure render speed of Python font:', x, 80, GREEN, BLACK)
 mv, rows, cols = font10.get_ch('A')
-x = 200
-nchars = 20
+nchars = 30
 t = ticks_us()
 for _ in range(nchars):
     tft.draw_glyph(mv, x, 100, rows, cols, GREEN, BLACK)
@@ -68,11 +69,15 @@ for _ in range(nchars):
 print('Time per char (us)', ticks_diff(ticks_us(), t)/nchars)  # 3.4ms for font10.
 
 # Verify glyph doesn't exceed bounding box
-x, y = 100, 200
+x, y = 400, 10
 tft.fill_rectangle(x, y, x + 40, y + 40, GREEN)
-x = 88
+x = 388
 tft.draw_glyph(mv, x, y, rows, cols, BLACK, YELLOW)
 
 # Test pixel draw
-for x in range(10, 15):
-    tft.draw_pixel(x, 180, YELLOW)
+for x in range(10, 320, 3):
+    tft.draw_pixel(x, 179, CYAN)
+    tft.draw_pixel(x, 197, CYAN)
+
+tft.draw_str('Test of pixel draw and internal font *1', 10, 180, CYAN, BLACK)
+tft.draw_str('Internal font *2 size', 10, 220, YELLOW, BLACK, 1)

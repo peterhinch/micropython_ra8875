@@ -110,6 +110,11 @@ Display methods required for GUI:
  one bit per pixel as a horizontally mapped array. It is rendered at `x, y` and
  the glyph is organised as `rows, cols`. Rendering uses the supplied foreground
  and background colors.
+ 12. `draw_str` Args `s, x, y, fgcolor, bgcolor, scale=0` Render a string `s`
+ at location `x`, `y` using the RA8875 internal font. Rendering uses the
+ supplied foreground and background colors. Glyphs are fixed-pitch and default
+ to 8 bits wide by 16 high. They can be scaled by factors of 2, 3 or 4 by
+ passing `scale` values of 1-3.
 
 Touchpanel (TP) methods required by GUI:  
  1. `ready` No args. Returns `True` if TP data is available.

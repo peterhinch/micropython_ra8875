@@ -384,6 +384,33 @@ class RA8875:
             y += 1
             offs += gbytes
 
+    def draw_str(self, s, x, y, fgcolor, bgcolor, scale=0):
+        self._write_reg(0x40, 0x80)  # Text mode
+        self._write_reg(0x21, 0)  # Internal font ROM, ISO/IEC 8859-1
+        scale = min(3, max(scale, 0))
+        scale |= scale << 2
+        self._write_reg(0x22, scale)
+        self._write_reg(0x2a, x & 0xff)
+        self._write_reg(0x2b, x >> 8)
+        self._write_reg(0x2c, y & 0xff)
+        self._write_reg(0x2d, y >> 8)
+        self._set_color(fgcolor)
+        # BG color for text
+        r, g, b = bgcolor
+        self._write_reg(0x60, (r & 0xff) >> 3)  # R
+        self._write_reg(0x61, (g & 0xff) >> 2)  # G
+        self._write_reg(0x62, (b & 0xff) >> 3)  # B
+        self._pincs(0)
+        self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE
+        self._pincs(1)
+        for char in s:
+            self._pincs(0)
+            self._spi.write('\x00')
+            self._spi.write(char)
+            self._pincs(1)
+            scale and sleep_ms(1)  # As per Adafruit
+
+        self._write_reg(0x40, 0)  # Always leave in graphic mode
 
 
     # **** TOUCH PANEL ****
