@@ -324,22 +324,12 @@ class RA8875:
 
     # **** PIXEL LEVEL PRIMITIVES ****
 
-    # Set memory write X and Y pixel coordinates
-    def _setxy(self, x, y, write):
-        if write:
-            self._write_reg(0x46, x & 0xff)  # Memory write cursor
-            self._write_reg(0x47, x >> 8)
-            self._write_reg(0x48, y & 0xff)
-            self._write_reg(0x49, y >> 8)
-        else:
-            self._write_reg(0x4a, x & 0xff)  # Memory read cursor
-            self._write_reg(0x4b, x >> 8)
-            self._write_reg(0x4c, y & 0xff)
-            self._write_reg(0x4d, y >> 8)
-
     # Draw single pixel
-    def draw_pixel(self, x, y, rgb):  # OK
-        self._setxy(x, y, True)
+    def draw_pixel(self, x, y, rgb):
+        self._write_reg(0x46, x & 0xff)  # Set xy for memory write cursor
+        self._write_reg(0x47, x >> 8)
+        self._write_reg(0x48, y & 0xff)
+        self._write_reg(0x49, y >> 8)
         self._pincs(0)
         self._spi.write(b'\x80\x02')  # RA8875_CMDWRITE
         self._pincs(1)
@@ -351,7 +341,6 @@ class RA8875:
     # Caller must validate dimensions.
     # Optimisation: don't deassert CS between writing register no. and writing
     # the memory write command (\x00).
-    # Time to render a font10 "A" 3.4ms.
     @micropython.native
     def draw_glyph(self, mv, x, y, rows, cols, fgcolor, bgcolor):
         gbytes = ((cols - 1) >> 3) + 1  # Source bytes per row
