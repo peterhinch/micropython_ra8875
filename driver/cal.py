@@ -23,9 +23,7 @@
 # THE SOFTWARE.
 
 import uasyncio as asyncio
-from utime import sleep_ms
 from micropython_ra8875.support.constants import *  # Colors
-import micropython_ra8875.support.font14 as font14
 from micropython_ra8875.tft_local import setup
 
 tft = setup(True, True)
@@ -37,25 +35,21 @@ tft.draw_vline(0, 0, ll, lc)
 tft.draw_hline(tft.width() -ll - 1, tft.height() - 1, ll, lc)
 tft.draw_vline(tft.width() - 1, tft.height() -ll - 1, ll, lc)
 
-def print_string(s, x, y):
-    xleft = x
-    for c in s:
-        if c == '\n':
-            x = xleft
-            y += rows
-        else:
-            fmv, rows, cols = font14.get_ch(c)
-            tft.draw_glyph(fmv, x, y, rows, cols, GREEN, BLACK)
-            x += cols
-
 msg1 = '''To calibrate touch the screen at the top left
-and bottom right hand corners of the displayable
-area, ideally with a stylus. Record the maximum
-and minimum x and y values.
+and bottom right hand corners of the screen
+where the yellow lines meet - ideally with a
+stylus.
+Record the resultant x and y values.
 Adapt tft_local.py accordingly.
+
 Press ctrl-c to quit.'''
 
-print_string(msg1, 0, 30)
+#print_string(msg1, 0, 30)
+x = 50
+y = 80
+for s in msg1.split('\n'):
+    tft.draw_str(s, x, y, GREEN, BLACK)
+    y += 16
 
 async def do_touch(tft):
     while True:
@@ -63,6 +57,7 @@ async def do_touch(tft):
             print(tft.get_touch())
         await asyncio.sleep_ms(20)
 
+print('See on-screen instructions.')
 loop = asyncio.get_event_loop()
 try:
     loop.run_until_complete(do_touch(tft))
