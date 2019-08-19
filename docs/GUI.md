@@ -182,6 +182,7 @@ Demo programs in the `demos` subdirectory:
  overlaying screen quits.
  6. `dialog.py` Modal dialog boxes.
  7. `pt.py` Plot test.
+ 8. `ktif.py` Uses internal and external fonts.
 
 It is wise to issue `ctrl-d` to soft reset the target before importing a module
 which uses the library. The demo programs require a `ctrl-d` before import.
@@ -987,11 +988,19 @@ text of the button pressed or 'Close' in the case of the `close` button.
 
 # 8. Fonts
 
-Fonts may be created using the `font_to_py.py` utility documented
-[here](https://github.com/peterhinch/micropython-font-to-py.git). The `-x`
-argument should be employed. The resultant Python file may be imported and
-the module passed to the constructor of GUI objects. These files may be
-frozen as bytecode to radically reduce RAM usage.
+Fixed and variable pitch fonts may be created using the `font_to_py.py` utility
+documented [here](https://github.com/peterhinch/micropython-font-to-py.git).
+The `-x` argument should be employed. The resultant Python file may be imported
+and the module passed to the constructor of GUI objects. Python font files may
+be frozen as bytecode to radically reduce RAM usage.
+
+The RA8875 has an internal font. This is fixed pitch and has dimensions 16*8
+(rows*cols). It can be rendered at this size or scaled by factors of 2, 3 or 4.
+In the context of the GUI, sizes other than the native size are large. The file
+`constants.py` provides an instance of each of these sizes: these instances may
+be used in any place where a font is required. Instances, identified by height,
+are `IFONT16`, `IFONT32`, `IFONT48` and `IFONT64`. For example usage see
+`demos/ktif.py`.
 
 # 9. Memory issues
 
@@ -1019,11 +1028,11 @@ Instructions on doing this may be found
 involves copying the directory tree to a directory on your PC, compiling a
 build and installing it.
 
-In my testing the device driver was not frozen successfully, probably because
-it uses the native and viper code emitters. I froze the files in the root
-directory and the `demos` and `support` subdirectories. On the target's
-filesystem I created the `micropython_ra8875` directory and its `driver`
-subdirectory and copied the contents into there. This was successful.
+In my testing the device driver was not frozen successfully because it uses the
+native and viper code emitters. I froze the files in the root directory and the
+`demos` and `support` subdirectories. On the target's filesystem I created the
+`micropython_ra8875` directory and its `driver` subdirectory and copied the
+contents into there. This was successful.
 
 # 10. References
 
@@ -1046,8 +1055,6 @@ Implement a vector display object similar to that in
 
 Try to improve the handling of the spurious touch events from the hardware to
 reduce flicker.
-
-Consider implementing internal fonts on the RA8875 to improve rendering speed.
 
 
 

@@ -109,10 +109,13 @@ class TFT(RA8875):
         font = self.text_font
         fgc = self.text_fgc
         bgc = self.text_bgc
-        for c in s:
-            fmv, rows, cols = font.get_ch(c)
-            self.draw_glyph(fmv, x, y, rows, cols, fgc, bgc)
-            x += cols
+        if isinstance(font, IFont):  # Internal font
+            self.draw_str(s, x, y, fgc, bgc, font.scale())
+        else:
+            for c in s:
+                fmv, rows, cols = font.get_ch(c)
+                self.draw_glyph(fmv, x, y, rows, cols, fgc, bgc)
+                x += cols
 
     def _getcolor(self, color):
         if self._is_grey:
