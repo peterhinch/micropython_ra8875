@@ -21,7 +21,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import pyb
+
+import sys
+try:
+    import pyb
+except ImportError:
+    print('This demo is Pyboard specific.')
+    sys.exit(0)
+
 import uasyncio as asyncio
 from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import HorizSlider, Button, ButtonList, Dial, Label, Meter, LED, Screen

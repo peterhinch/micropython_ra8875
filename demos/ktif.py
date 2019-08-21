@@ -24,8 +24,9 @@
 # THE SOFTWARE.
 
 from math import pi
+import cmath
 from micropython_ra8875.support.constants import *
-from micropython_ra8875.ugui import Knob, Dial, Label, Button, ButtonList, Screen, Dropdown, Listbox
+from micropython_ra8875.ugui import Pointer, Knob, VectorDial, Label, Button, ButtonList, Screen, Dropdown, Listbox
 from micropython_ra8875.tft_local import setup
 
 import micropython_ra8875.support.font10 as font10
@@ -35,11 +36,13 @@ class KnobScreen(Screen):
         super().__init__()
         Button((390, 240), font = IFONT16, callback = self.quit, fgcolor = RED,
             text = 'Quit', shape = RECTANGLE, width = 80, height = 30)
-        self.dial = Dial((120, 0), fgcolor = YELLOW, border = 2, pointers = (0.9, 0.7))
+        dial = VectorDial((120, 0), fgcolor = YELLOW, border = 2)
+        hrs = Pointer(dial)
+        mins = Pointer(dial)
         k0 = Knob((0, 0), fgcolor = GREEN, bgcolor=(0, 0, 80), color = (168,63,63), border = 2,
-                cb_end = self.callback, cbe_args = ['Knob1'], cb_move = self.knob_moved, cbm_args = (0,))
+                cb_end = self.callback, cbe_args = ['Knob1'], cb_move = self.knob_moved, cbm_args = (mins, 0.9))
         k1 = Knob((0, 120), fgcolor = WHITE, border = 2, arc = pi * 1.5,
-                cb_end = self.callback, cbe_args = ['Knob2'], cb_move = self.knob_moved, cbm_args = (1,))
+                cb_end = self.callback, cbe_args = ['Knob2'], cb_move = self.knob_moved, cbm_args = (hrs, 0.7))
         Label((0, 225), font = font10, value = 'Arc = 270 degs.')
 # Dropdown
         self.lbl_dd = Label((120, 120), font = IFONT16, width = 100, border = 2, bgcolor = (0, 40, 0), fgcolor = RED)
@@ -75,9 +78,9 @@ class KnobScreen(Screen):
     def callback(self, knob, control_name):
         print('{} returned {}'.format(control_name, knob.value()))
 
-    def knob_moved(self, knob, pointer):
+    def knob_moved(self, knob, pointer, length):
         val = knob.value() # range 0..1
-        self.dial.value(2 * (val - 0.5) * pi, pointer)
+        pointer.value(length * cmath.exp(-2j * val * pi))
 
     def quit(self, button):
         Screen.shutdown()

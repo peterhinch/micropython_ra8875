@@ -1,5 +1,4 @@
 # screentest.py Test/demo of multiple screens for Pybboard RA8875 GUI
-# asyncio version. TODO figure out how to pause and resume dial
 
 # The MIT License (MIT)
 #

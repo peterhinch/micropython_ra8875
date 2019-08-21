@@ -44,6 +44,7 @@ An extension for plotting simple graphs is provided and is described
   5.2 [Class Dial](./GUI.md#52-class-dial)  
   5.3 [Class LED](./GUI.md#53-class-led)  
   5.4 [Class Meter](./GUI.md#54-class-meter)  
+  5.5 [Vector display](./GUI.md#55-vector-display)  
 6. [Control Classes](./GUI.md#6-control-classes)  
   6.1 [Class Slider](./GUI.md#61-class-slider)  
   6.2 [Class Knob](./GUI.md#62-class-knob)  
@@ -465,10 +466,12 @@ Method:
 
 ## 5.2 Class Dial
 
-Displays angles in a circular dial. Angles are in radians with zero represented
-by a vertical pointer. Positive angles appear as clockwise rotation of the
-pointer. The object can display multiple angles using pointers of differing
-lengths (like a clock face).
+Displays scalar values in a circular dial. Values may be considered to be
+angles in radians with zero appearing as a vertical pointer. Positive angles
+appear as clockwise rotation of the pointer. The object can display multiple
+angles using pointers of differing lengths (like a clock face).
+
+See also the [vector display](./GUI.md#55-vector-display).
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -551,6 +554,44 @@ The callback receives an initial arg being the `Meter` instance followed by any
 user supplied args. It can be a bound method, typically of a `Screen` subclass.
 The CB runs before the update is processed, enabling dynamic color change. See
 `demos/hst.py`.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 5.5 Vector display
+
+Provides a means of displaying one or more vectors. A vector is a `complex`
+with magnitude in the range of 0 to 1.0. In use a `VectorDial` is instantiated,
+followed by a `Pointer` instance for each vector to be displayed on it. The
+`VectorDial` can display its vectors as lines (as on a clock face) or as arrows
+(as on a compass).
+
+### Class VectorDial
+
+Constructor mandatory positional argument:
+ 1. `location` 2-tuple defining position.
+
+Keyword only arguments (all optional):  
+ * `height=100` Dimension of the square bounding box.
+ * `fgcolor=None` Color of border. Defaults to system color.
+ * `bgcolor=None` Background color of object. Defaults to system background.
+ * `border=None` Border width in pixels - typically 2. Default: no border.
+ * `ticks=4` Defines the number of graduations around the dial.
+ * `arrow=False` If `True` vectors will appear as arrows.
+ * `pip=None` By default a small circular "pip" is drawn at the centre of the
+ dial. If `False` is passed this is omitted. If a color is passed, it will be
+ drawn using that color. If the shortest pointer has a length below a threshold
+ the "pip" is omitted to ensure visibility.
+
+### Class Pointer
+
+Constructor mandatory positional arg:
+ * `dial` The dial on which it is to be displayed.
+
+Method:
+ * `value` Args `v=None, col=None`. Returns the current value. If a `complex`
+ is passed as the value `v` it is scaled to ensure its magnitude is <= 1 and
+ the pointer is redrawn. If a color is passed as `col` the pointer's color is
+ updated.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
