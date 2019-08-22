@@ -184,6 +184,8 @@ Demo programs in the `demos` subdirectory:
  6. `dialog.py` Modal dialog boxes.
  7. `pt.py` Plot test.
  8. `ktif.py` Uses internal and external fonts.
+ 9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
+ displays.
 
 It is wise to issue `ctrl-d` to soft reset the target before importing a module
 which uses the library. The demo programs require a `ctrl-d` before import.
@@ -564,6 +566,9 @@ with magnitude in the range of 0 to 1.0. In use a `VectorDial` is instantiated,
 followed by a `Pointer` instance for each vector to be displayed on it. The
 `VectorDial` can display its vectors as lines (as on a clock face) or as arrows
 (as on a compass).
+
+By contrast with the `Dial` class the pointers have lengths and colors which
+can vary dynamically.
 
 ### Class VectorDial
 
