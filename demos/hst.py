@@ -22,13 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import sys
-try:
-    import pyb
-except ImportError:
-    print('This demo is Pyboard specific.')
-    sys.exit(0)
-
+import urandom
 import uasyncio as asyncio
 from micropython_ra8875.support.constants import *
 from micropython_ra8875.ugui import HorizSlider, Button, ButtonList, Dial, Label, Meter, LED, Screen
@@ -124,7 +118,7 @@ class SliderScreen(Screen):
         oldvalue = 0
         await asyncio.sleep(0)
         while True:
-            val = pyb.rng() / 2**30
+            val = urandom.getrandbits(16) / 2**16
             steps = 20
             delta = (val - oldvalue) / steps
             for _ in range(steps):

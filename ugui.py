@@ -643,7 +643,7 @@ class VectorDial(NoTouch):
             vshort = min(vshort, cmath.polar(val)[0])
             v.show()
         if isinstance(self.pip, tuple) and vshort > 9:
-            tft.fill_circle(xo, yo, 4, self.pip)
+            tft.fill_circle(xo, yo, 3, self.pip)
 
 # class displays angles. Angle 0 is vertical, +ve increments are clockwise.
 class Dial(NoTouch):

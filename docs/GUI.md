@@ -478,7 +478,7 @@ Constructor mandatory positional argument:
 
 Keyword only arguments (all optional):  
  * `height` Dimension of the square bounding box. Default 100 pixels.
- * `fgcolor` Color of border. Defaults to system color.
+ * `fgcolor` Foreground color. Defaults to system color.
  * `bgcolor` Background color of object. Defaults to system background.
  * `border` Border width in pixels - typically 2. If omitted, no border will
  be drawn.
@@ -572,7 +572,7 @@ Constructor mandatory positional argument:
 
 Keyword only arguments (all optional):  
  * `height=100` Dimension of the square bounding box.
- * `fgcolor=None` Color of border. Defaults to system color.
+ * `fgcolor=None` Foreground color. Defaults to system color.
  * `bgcolor=None` Background color of object. Defaults to system background.
  * `border=None` Border width in pixels - typically 2. Default: no border.
  * `ticks=4` Defines the number of graduations around the dial.
