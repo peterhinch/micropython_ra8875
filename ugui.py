@@ -645,6 +645,10 @@ class Textbox(Touchable):
         if not self.updating:
             self.scroll(-1 if  2 * y < self.height else 1)
 
+    def value(self):
+        return self._value
+
+
 # Vector display
 class Pointer:
     def __init__(self, dial):
