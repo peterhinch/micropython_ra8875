@@ -87,6 +87,7 @@ class TScreen(Screen):
                   'fgcolor' : RED,
                   'bgcolor' : DARKGREEN,
                   'font' : IFONT16,
+                  'repeat' : False,
                   }
         btntable = {'fgcolor' : LIGHTBLUE,
                     'font' : font14,

@@ -541,14 +541,17 @@ class Label(NoTouch):
         if self._value is not None:
             tft.print_left(x + bw, y + bw, self._value, self.text_style)
 
-class Textbox(NoTouch):
-    def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None, bgcolor=None, fontcolor=None, clip=True):
+class Textbox(Touchable):
+    def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None,
+                 bgcolor=None, fontcolor=None, clip=True, repeat=True):
         height = nlines * font.height() + 2 * border if isinstance(border, int) else nlines * font.height()
-        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, 0, 0)
+        super().__init__(location, font, height, width, fgcolor, bgcolor,
+                         fontcolor, border, repeat, 0, 0)
         self.nlines = nlines
         self.clip = clip
         self.lines = []
         self.start = 0  # Start line for display
+        self.updating = False
 
     def _add_lines(self, s):
         width = self.width - 2 * self.border
@@ -617,6 +620,7 @@ class Textbox(NoTouch):
         self._print_lines()
 
     def append(self, s, ntrim=None):
+        self.updating = True
         self._add_lines(s)
         if ntrim is None:  # Default to no. of lines that can fit
             ntrim = self.nlines
@@ -625,12 +629,21 @@ class Textbox(NoTouch):
         self._value = len(self.lines)
         self.start = max(0, self._value - self.nlines)
         self.show_if_current()
+        self.updating = False
 
     def scroll(self, n):
         if n == 0 or self._value <= self.nlines:
             return
+        s = self.start
         self.start = max(0, min(self.start + n, self._value - self.nlines))
-        self.show_if_current()
+        if s != self.start:
+            self.updating = True
+            self.show_if_current()
+        self.updating = False
+
+    def _touched(self, x, y): # Was touched
+        if not self.updating:
+            self.scroll(-1 if  2 * y < self.height else 1)
 
 # Vector display
 class Pointer:

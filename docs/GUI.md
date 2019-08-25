@@ -472,7 +472,8 @@ Method:
 
 Displays multiple lines of text in a field of fixed dimensions. Text may be
 clipped to the width of the control or may be word-wrapped. If the number of
-lines of text exceeds the height available, scrolling may be performed.
+lines of text exceeds the height available, scrolling may be performed, either
+by calling a method or by touching the control.
 
 Constructor mandatory positional arguments:
  1. `location` 2-tuple defining position.
@@ -492,6 +493,9 @@ Keyword only arguments:
  * `clip=True` By default lines too long to display are right clipped. If
  `False` is passed, word-wrap is attempted. If the line contains no spaces
  it will be wrapped at the right edge of the window.
+ * `repeat=True` Controls the behaviour of touch-based scrolling. By default
+ a long press causes repeated scrolling. `False` requires a discrete press for
+ each line movement.
 
 Methods:
  * `append` Args `s, ntrim=None` Append the string `s` to the display and
@@ -501,6 +505,7 @@ Methods:
  * `scroll` Arg `n` Number of lines to scroll. A negative number scrolls up. If
  scrolling would achieve nothing because there are no extra lines to display,
  nothing will happen.
+ * `value` No args. Returns the number of lines of text stored in the widget.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
