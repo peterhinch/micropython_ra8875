@@ -46,12 +46,13 @@ class KnobScreen(Screen):
         self.dropdown = Dropdown((280, 0), font = font14, width = 100, callback = self.cbdb,
                                  elements = ('Dog', 'Cat', 'Rat', 'Goat', 'Snake', 'Pig'))
 
-        Button((280, 70), font = font14, callback = self.set_dropdown, fgcolor = BLUE,
+        btnrst = Button((280, 70), font = font14, callback = self.set_dropdown, fgcolor = BLUE,
             text = 'Reset', shape = RECTANGLE, width = 80, height = 30) # Test of set by value
-        Button((280, 120), font = font14, callback = self.set_bytext, args = ('Snake',), fgcolor = CYAN,
+        btnsnake = Button((280, 120), font = font14, callback = self.set_bytext, args = ('Snake',), fgcolor = CYAN,
             fontcolor = BLACK, text = 'Snake', shape = RECTANGLE, width = 80, height = 30) # test set by text
 # Listbox
-        self.listbox = Listbox((370, 70), font = font14, width = 105,
+        self.lbl_lb = Label((120, 150), font = font14, width = 100, border = 2, bgcolor = (0, 40, 0), fgcolor = RED)
+        listbox = Listbox((370, 70), font = font14, width = 105,
                                bgcolor = GREY, fgcolor = YELLOW, select_color = BLUE,
                                elements = ('aardvark', 'zebra', 'armadillo', 'warthog'),
                                callback = self.cblb)
@@ -64,7 +65,7 @@ class KnobScreen(Screen):
                           fgcolor = GREEN, shape = RECTANGLE, text = 'Grey', args = (True,))
 # On/Off toggle enable/disable
         bs = ButtonList(self.cb_en_dis)
-        self.lst_en_dis = (bstyle, k0, k1, self.dropdown, self.listbox)
+        self.lst_en_dis = (bstyle, k0, k1, self.dropdown, listbox, btnrst, btnsnake)
         bs.add_button((280, 240), font = font14, fontcolor = BLACK, height = 30, width = 90,
                       fgcolor = GREEN, shape = RECTANGLE, text = 'Disable', args = (True,))
         bs.add_button((280, 240), font = font14, fontcolor = BLACK, height = 30, width = 90,
@@ -94,7 +95,7 @@ class KnobScreen(Screen):
         self.lbl_dd.value(dropdown.textvalue())
 
     def cblb(self, listbox):
-        print(listbox.textvalue())
+        self.lbl_lb.value(listbox.textvalue())
 
     def set_dropdown(self, button):
         self.dropdown.value(0)

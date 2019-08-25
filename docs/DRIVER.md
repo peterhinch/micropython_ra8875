@@ -92,7 +92,8 @@ method which handles the touch panel. If `None` is passed this will not be run:
 the touch panel will be inoperative.
 
 Display methods required for GUI:  
- 1. `clr_scr` No args. Clear screen (all pixels off).
+ 1. `clr_scr` No args. Clear screen (all pixels off). In testing this sometimes
+ filled the screen with a color; `fill_rectangle` is reliable.
  2. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
  3. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
  4. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped

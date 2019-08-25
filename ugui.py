@@ -52,23 +52,13 @@ def get_stringsize(s, font):
         hor += cols
     return hor, vert
 
-# Style is (fgcolor, bgcolor, font)
-def print_centered(tft, x, y, s, style):
-    font = style[2]
-    length, height = get_stringsize(s, font)
-    tft.text_style(style)
-    tft.print_string(s, max(x - length // 2, 0), max(y - height // 2, 0))
-
-def print_left(tft, x, y, s, style):
-    tft.text_style(style)
-    tft.print_string(s, x, y)
-
 
 # *********** TFT CLASS ************
 # Subclass TFT to enable greying out of controls and polar methods.
 class TFT(RA8875):
     CCW = cmath.exp(3j * cmath.pi/4)  # Unit vectors for arrow
     CW =cmath.exp(-3j * cmath.pi/4)
+    DEFAULT_FONT = IFONT16  # System font
     def __init__(self, spi, pincs, pinrst, width, height, tdelay, loop):
         super().__init__(spi, pincs, pinrst, width, height, loop)
         self.tdelay = tdelay  # Touch mode
@@ -77,11 +67,6 @@ class TFT(RA8875):
         self.desaturate(True)
         self.fgcolor = WHITE
         self.bgcolor = BLACK
-        self.text_fgcolor = self.fgcolor  # colors set by user
-        self.text_bgcolor = self.bgcolor
-        self.text_fgc = self.fgcolor  # colors used by text rendering allowing for grey status
-        self.text_bgc = self.bgcolor
-        self.text_font = None
 
     def get_fgcolor(self):
         return self.fgcolor
@@ -89,29 +74,27 @@ class TFT(RA8875):
     def get_bgcolor(self):
         return self.bgcolor
 
-    # Get or set the text style (fgcolor, bgcolor, font)
-    # colors are (r, g, b)
-    # Sets self.text_bgc and self.text_fgc for rendering methods
-    def text_style(self, style=None):
-        if style is None:
-            return (self.text_fgcolor, self.text_bgcolor, self.text_font)
+    # Style is (fgcolor, bgcolor, font)
+    def print_centered(self, x, y, s, style):
+        font = style[2]
+        length, height = get_stringsize(s, font)
+        self.print_left(max(x - length // 2, 0), max(y - height // 2, 0), s, style)
 
+    # Return a text style (fgcolor, bgcolor, font) modified by tft grey status
+    # colors are (r, g, b)
+    def text_style(self, style):
         if self._is_grey:
-            self.text_bgc = self._greyfunc(style[1], self._factor)
+            text_bgc = self._greyfunc(style[1], self._factor)
         else:
-            self.text_bgc = style[1]
-        self.text_fgc = style[0]
+            text_bgc = style[1]
         font = style[2]
         if not font.hmap():
             raise UguiException('Font must be horizontally mapped')
-        self.text_font = font
-        return (self.text_fgc, self.text_bgc, font)
+        return (style[0], text_bgc, font)
 
     # Rudimentary: prints a single line. No handling of control chars
-    def print_string(self, s, x, y):
-        font = self.text_font
-        fgc = self.text_fgc
-        bgc = self.text_bgc
+    def print_left(self, x, y, s, style):
+        fgc, bgc, font = self.text_style(style)
         if isinstance(font, IFont):  # Internal font
             self.draw_str(s, x, y, fgc, bgc, font.scale())
         else:
@@ -284,7 +267,9 @@ class Screen:
 
     @classmethod
     def shutdown(cls):
-        cls.tft.clr_scr()
+#        cls.tft.clr_scr()
+        tft = cls.tft
+        tft.fill_rectangle(0, 0, tft.width() -1, tft.height() -1, BLACK)
         cls.is_shutdown.set()
 
     def __init__(self):
@@ -415,7 +400,7 @@ class NoTouch:
         self.visible = True # Used by ButtonList class for invisible buttons
         tft = Screen._get_tft(False) # Not greyed out
         if font is None:
-            self.font = tft.text_font
+            self.font = TFT.DEFAULT_FONT
         else:
             self.font = font
 
@@ -551,7 +536,103 @@ class Label(NoTouch):
         y = self.location[1]
         tft.fill_rectangle(x + bw, y + bw, x + self.width - bw, y + self.height - bw, self.bgcolor)
         if self._value is not None:
-            print_left(tft, x + bw, y + bw, self._value, self.text_style)
+            tft.print_left(x + bw, y + bw, self._value, self.text_style)
+
+class Textbox(NoTouch):
+    def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None, bgcolor=None, fontcolor=None, clip=True):
+        super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, '', None)
+        self.height = nlines * self.font.height()
+        self.height += 2 * self.border  # Height determined by font and border
+        self.nlines = nlines
+        self.clip = clip
+        self.lines = []
+
+    def _create_lines(self, font, width):
+        tft = self.tft
+        def process(s, idx):
+            s = s.lstrip()
+            if not s:
+                return
+
+            col = 0
+            for n in range(len(s)):
+                c = s[n]
+                if c == '\n':
+                    idx += n + 1
+                    lines.append((s[: n], idx))
+                    process(s[n : ], idx)
+                    break  # Line fits window
+                _, _, cols = font.get_ch(c)
+                col += cols
+                if col > width:
+                    if self.clip:
+                        p = s.find('\n')  # end of 1st line
+                        if p == -1:
+                            idx += len(s)
+                            lines.append((s[:n], idx))  # clip, discard all to right
+                            break
+                        idx += p + 1
+                        lines.append((s[:n], idx))  # clip, discard to 1st newline
+                        process(s[p:], idx)
+                        break  # All done
+                    elif c == ' ':  # Easy word wrap
+                        idx += n + 1
+                        lines.append((s[: n], idx))
+                        process(s[n + 1 :], idx)
+                        break
+                    else:  # Edge splits a word
+                        p = s[: n].rfind(' ')
+                        if p >= 0:  # spacechar in line: wrap at space
+                            assert (p > 0), 'space char in position 0'
+                            idx += p
+                            lines.append((s[:p], idx))
+                            process(s[p + 1 :], idx)
+                        else:  # No spacechar: wrap at end
+                            idx += n
+                            lines.append((s[: n], idx))
+                            process(s[n : ], idx)
+                        break
+            else:  # No newline and line fits
+#                idx += len(s)
+                lines.append((s, idx))
+
+        lines = []
+        process(self._value, 0)
+        self.lines = lines
+
+    def _print_lines(self, font):
+        tft = self.tft
+        bw = self.border
+        x = self.location[0] + bw
+        y = self.location[1] + bw
+        xstart = x  # Print the last lines that fit widget's height
+        for line in self.lines[-self.nlines : ]:
+            tft.print_left(x, y, line[0], self.text_style)
+            y += font.height()
+            x = xstart
+
+    def show(self):
+        tft = self.tft
+        bw = self.border
+        x = self.location[0]
+        y = self.location[1]
+        w = self.width
+        _, _, font = self.text_style
+        # Clear text area
+        tft.fill_rectangle(x + bw, y + bw, x + w - bw, y + self.height - bw, self.bgcolor)
+        if self._value is not None and self._value != '':
+            # Format text as a list of lines fitting the width
+            self._create_lines(font, w - 2 * bw)  # b'T'
+            self._print_lines(font)
+
+    def trim(self, n=None):
+        if n is None:
+            n = self.nlines
+        if len(self.lines) <= n:
+            return  # Nothing to do
+        p = self.lines[n - 1][1]
+        self._value = self._value[p:]
+        print('trim', self._value.encode())
 
 # Vector display
 class Pointer:
@@ -839,7 +920,7 @@ class Button(Touchable):
             else:
                 tft.draw_circle(x, y, self.radius, self.fgcolor)
             if self.font is not None and len(self.text):
-                print_centered(tft, x, y, self.text, self.text_style)
+                tft.print_centered(x, y, self.text, self.text_style)
         else:
             x1 = x + self.width
             y1 = y + self.height
@@ -849,14 +930,14 @@ class Button(Touchable):
                 else:
                     tft.draw_rectangle(x, y, x1, y1, self.fgcolor)
                 if self.font  is not None and len(self.text):
-                    print_centered(tft, (x + x1) // 2, (y + y1) // 2, self.text, self.text_style)
+                    tft.print_centered((x + x1) // 2, (y + y1) // 2, self.text, self.text_style)
             elif self.shape == CLIPPED_RECT: # clipped rectangle
                 if self.fill:
                     tft.fill_clipped_rectangle(x, y, x1, y1, self.fgcolor)
                 else:
                     tft.draw_clipped_rectangle(x, y, x1, y1, self.fgcolor)
                 if self.font  is not None and len(self.text):
-                    print_centered(tft, (x + x1) // 2, (y + y1) // 2, self.text, self.text_style)
+                    tft.print_centered((x + x1) // 2, (y + y1) // 2, self.text, self.text_style)
 
     def shownormal(self):
         self.fgcolor = self.orig_fgcolor
@@ -1310,9 +1391,9 @@ class Listbox(Touchable):
             ye = y + n * self.entry_height
             if n == self._value:
                 tft.fill_rectangle(xs, ye + 1, xe, ye + self.entry_height - 1, self.select_color)
-                print_left(tft, xs, ye + 1, self.elements[n], self.select_style)
+                tft.print_left(xs, ye + 1, self.elements[n], self.select_style)
             else:
-                print_left(tft, xs, ye + 1, self.elements[n], self.text_style)
+                tft.print_left(xs, ye + 1, self.elements[n], self.text_style)
 
     def textvalue(self, text=None): # if no arg return current text
         if text is None:
@@ -1353,7 +1434,7 @@ class _ListDialog(Aperture):
         tft = self.tft
         self.listbox = Listbox(lb_location, font = font, elements = elements, width = lb_width,
                                border = None, fgcolor = dd.fgcolor, bgcolor = dd.bgcolor,
-                               fontcolor = tft.text_fgcolor, select_color = dd.select_color,
+                               fontcolor = tft.fgcolor, select_color = dd.select_color,
                                value = dd.value(), callback = self.callback)
         self.dropdown = dd
 
@@ -1383,7 +1464,7 @@ class Dropdown(Touchable):
         x, y = self.location[0], self.location[1]
         self._draw(tft, x, y)
         if self._value is not None:
-            print_left(tft, x + bw, y + bw + 1, self.elements[self._value], self.text_style)
+            tft.print_left(x + bw, y + bw + 1, self.elements[self._value], self.text_style)
 
     def textvalue(self, text=None): # if no arg return current text
         if text is None:

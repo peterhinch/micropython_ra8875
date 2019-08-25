@@ -41,7 +41,7 @@ DARKGREEN = (0, 40, 0)
 LIGHTBLUE = (0, 0, 80)
 
 
-# Internal font for RA8875
+# Internal font for RA8875 - subset of font_to_py methods to minimise code.
 class IFont:
     def __init__(self, scale):
         scale = max(0, min(3, scale))

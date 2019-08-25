@@ -228,7 +228,7 @@ class RA8875:
 
     # **** GRAPHICS PRIMITIVES ****
 
-    def clr_scr(self):  # Clear screen
+    def clr_scr(self):  # Clear screen NOTE: does not always work as expected.
         self._write_reg(0x8e, 0x80)
         self._wait_complete(0x8e)
 
