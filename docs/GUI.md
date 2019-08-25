@@ -41,10 +41,11 @@ An extension for plotting simple graphs is provided and is described
 4. [Class Screen](./GUI.md#4-class-screen)  
 5. [Display Classes](./GUI.md#5-display-classes)  
   5.1 [Class Label](./GUI.md#51-class-label)  
-  5.2 [Class Dial](./GUI.md#52-class-dial)  
-  5.3 [Class LED](./GUI.md#53-class-led)  
-  5.4 [Class Meter](./GUI.md#54-class-meter)  
-  5.5 [Vector display](./GUI.md#55-vector-display)  
+  5.2 [Class Textbox](./GUI.md#52-class-textbox)  
+  5.3 [Class Dial](./GUI.md#53-class-dial)  
+  5.4 [Class LED](./GUI.md#54-class-led)  
+  5.5 [Class Meter](./GUI.md#55-class-meter)  
+  5.6 [Vector display](./GUI.md#56-vector-display)  
 6. [Control Classes](./GUI.md#6-control-classes)  
   6.1 [Class Slider](./GUI.md#61-class-slider)  
   6.2 [Class Knob](./GUI.md#62-class-knob)  
@@ -186,6 +187,7 @@ Demo programs in the `demos` subdirectory:
  8. `ktif.py` Uses internal and external fonts.
  9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
  displays.
+ 10. `tbox.py` Demo of the `Textbox` control.
 
 It is wise to issue `ctrl-d` to soft reset the target before importing a module
 which uses the library. The demo programs require a `ctrl-d` before import.
@@ -443,8 +445,8 @@ These classes provide ways to display data and are not touch sensitive.
 
 ## 5.1 Class Label
 
-Displays text in a fixed length field. The height of a label is determined by
-the metrics of the specified font.
+Displays a single line of text in a fixed length field. The height of a label
+is determined by the metrics of the specified font.
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -466,7 +468,43 @@ Method:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 5.2 Class Dial
+## 5.2 Class Textbox
+
+Displays multiple lines of text in a field of fixed dimensions. Text may be
+clipped to the width of the control or may be word-wrapped. If the number of
+lines of text exceeds the height available, scrolling may be performed.
+
+Constructor mandatory positional arguments:
+ 1. `location` 2-tuple defining position.
+ 2. `width` Width of the object in pixels.
+ 3. `nlines` Number of lines of text to display. The object's height is
+ determined from the height of the font:  
+ `height in pixels = nlines*font_height + 2*border`
+ 4. `font` Font to use. The internal font `IFONT16` renders faster than the
+ Python fonts.
+
+Keyword only arguments:
+ * `border=2` Border width in pixels - typically 2. If `None`, no border will
+ be drawn.
+ * `fgcolor=None` Color of border. Defaults to system color.
+ * `bgcolor=None` Background color of object. Defaults to system background.
+ * `fontcolor=None` Text color. Defaults to system text color.
+ * `clip=True` By default lines too long to display are right clipped. If
+ `False` is passed, word-wrap is attempted. If the line contains no spaces
+ it will be wrapped at the right edge of the window.
+
+Methods:
+ * `append` Args `s, ntrim=None` Append the string `s` to the display and
+ scroll up as required. By default this could lead to an ever growing list of
+ lines: setting (say) `ntrim=15` ensures that only the most recent 15 lines are
+ retained.
+ * `scroll` Arg `n` Number of lines to scroll. A negative number scrolls up. If
+ scrolling would achieve nothing because there are no extra lines to display,
+ nothing will happen.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 5.3 Class Dial
 
 Displays scalar values in a circular dial. Values may be considered to be
 angles in radians with zero appearing as a vertical pointer. Positive angles
@@ -497,7 +535,7 @@ Method:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 5.3 Class LED
+## 5.4 Class LED
 
 Displays a Boolean state. Can display other information by varying the color.
 
@@ -520,7 +558,7 @@ Methods:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 5.4 Class Meter
+## 5.5 Class Meter
 
 This displays a single value in range 0.0 to 1.0 on a vertical linear meter.
 
@@ -559,7 +597,7 @@ The CB runs before the update is processed, enabling dynamic color change. See
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 5.5 Vector display
+## 5.6 Vector display
 
 Provides a means of displaying one or more vectors. A vector is a `complex`
 with magnitude in the range of 0 to 1.0. In use a `VectorDial` is instantiated,

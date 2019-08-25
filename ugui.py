@@ -543,9 +543,8 @@ class Label(NoTouch):
 
 class Textbox(NoTouch):
     def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None, bgcolor=None, fontcolor=None, clip=True):
-        super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, 0, 0)
-        self.height = nlines * self.font.height()
-        self.height += 2 * self.border  # Height determined by font and border
+        height = nlines * font.height() + 2 * border if isinstance(border, int) else nlines * font.height()
+        super().__init__(location, font, height, width, fgcolor, bgcolor, fontcolor, border, 0, 0)
         self.nlines = nlines
         self.clip = clip
         self.lines = []
