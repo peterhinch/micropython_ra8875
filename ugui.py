@@ -94,6 +94,8 @@ class TFT(RA8875):
 
     # Rudimentary: prints a single line. No handling of control chars
     def print_left(self, x, y, s, style):
+        if s == '':
+            return
         fgc, bgc, font = self.text_style(style)
         if isinstance(font, IFont):  # Internal font
             self.draw_str(s, x, y, fgc, bgc, font.scale())
@@ -326,7 +328,8 @@ class Screen:
                     obj.show()
 # Normally clear the screen and redraw everything
         else:
-            tft.clr_scr()
+#            tft.clr_scr()
+            tft.fill_rectangle(0, 0, tft.width() -1, tft.height() -1, BLACK)
             Screen.show()
 
     def on_open(self): # Optionally implemented in subclass
@@ -540,99 +543,95 @@ class Label(NoTouch):
 
 class Textbox(NoTouch):
     def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None, bgcolor=None, fontcolor=None, clip=True):
-        super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, '', None)
+        super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, 0, 0)
         self.height = nlines * self.font.height()
         self.height += 2 * self.border  # Height determined by font and border
         self.nlines = nlines
         self.clip = clip
         self.lines = []
+        self.start = 0  # Start line for display
 
-    def _create_lines(self, font, width):
-        tft = self.tft
-        def process(s, idx):
-            s = s.lstrip()
-            if not s:
+    def _add_lines(self, s):
+        width = self.width - 2 * self.border
+        font = self.text_style[2]
+        n = -1  # Index into string
+        newline = True
+        while True:
+            n += 1
+            if newline:
+                newline = False
+                ls = n  # Start of line being processed
+                col = 0  # Column relative to text area
+            if n >= len(s):  # End of string
+                if n > ls:
+                    self.lines.append(s[ls :])
                 return
+            c = s[n]  # Current char
+            if c == '\n':
+                self.lines.append(s[ls : n])
+                newline = True
+                continue  # Line fits window
 
-            col = 0
-            for n in range(len(s)):
-                c = s[n]
-                if c == '\n':
-                    idx += n + 1
-                    lines.append((s[: n], idx))
-                    process(s[n : ], idx)
-                    break  # Line fits window
-                _, _, cols = font.get_ch(c)
-                col += cols
-                if col > width:
-                    if self.clip:
-                        p = s.find('\n')  # end of 1st line
-                        if p == -1:
-                            idx += len(s)
-                            lines.append((s[:n], idx))  # clip, discard all to right
-                            break
-                        idx += p + 1
-                        lines.append((s[:n], idx))  # clip, discard to 1st newline
-                        process(s[p:], idx)
-                        break  # All done
-                    elif c == ' ':  # Easy word wrap
-                        idx += n + 1
-                        lines.append((s[: n], idx))
-                        process(s[n + 1 :], idx)
-                        break
-                    else:  # Edge splits a word
-                        p = s[: n].rfind(' ')
-                        if p >= 0:  # spacechar in line: wrap at space
-                            assert (p > 0), 'space char in position 0'
-                            idx += p
-                            lines.append((s[:p], idx))
-                            process(s[p + 1 :], idx)
-                        else:  # No spacechar: wrap at end
-                            idx += n
-                            lines.append((s[: n], idx))
-                            process(s[n : ], idx)
-                        break
-            else:  # No newline and line fits
-#                idx += len(s)
-                lines.append((s, idx))
+            col += font.get_ch(c)[2]  # width of current char
+            if col > width:
+                if self.clip:
+                    p = s[ls :].find('\n')  # end of 1st line
+                    if p == -1:
+                        self.lines.append(s[ls : n])  # clip, discard all to right
+                        return
+                    self.lines.append(s[ls : n])  # clip, discard to 1st newline
+                    n = p  # n will move to 1st char after newline
+                elif c == ' ':  # Easy word wrap
+                    self.lines.append(s[ls : n])
+                else:  # Edge splits a word
+                    p = s.rfind(' ', ls, n + 1)
+                    if p >= 0:  # spacechar in line: wrap at space
+                        assert (p > 0), 'space char in position 0'
+                        self.lines.append(s[ls : p])
+                        n = p
+                    else:  # No spacechar: wrap at end
+                        self.lines.append(s[ls : n])
+                        n -= 1  # Don't skip current char
+                newline = True
 
-        lines = []
-        process(self._value, 0)
-        self.lines = lines
-
-    def _print_lines(self, font):
-        tft = self.tft
-        bw = self.border
-        x = self.location[0] + bw
-        y = self.location[1] + bw
-        xstart = x  # Print the last lines that fit widget's height
-        for line in self.lines[-self.nlines : ]:
-            tft.print_left(x, y, line[0], self.text_style)
-            y += font.height()
-            x = xstart
+    def _print_lines(self):
+        if self.value():
+            tft = self.tft
+            bw = self.border
+            x = self.location[0] + bw
+            y = self.location[1] + bw
+            xstart = x  # Print the last lines that fit widget's height
+            font = self.text_style[2]
+            #for line in self.lines[-self.nlines : ]:
+            for line in self.lines[self.start : self.start + self.nlines]:
+                tft.print_left(x, y, line, self.text_style)
+                y += font.height()
+                x = xstart
 
     def show(self):
         tft = self.tft
         bw = self.border
-        x = self.location[0]
-        y = self.location[1]
+        x, y = self.location
         w = self.width
-        _, _, font = self.text_style
         # Clear text area
         tft.fill_rectangle(x + bw, y + bw, x + w - bw, y + self.height - bw, self.bgcolor)
-        if self._value is not None and self._value != '':
-            # Format text as a list of lines fitting the width
-            self._create_lines(font, w - 2 * bw)  # b'T'
-            self._print_lines(font)
+        self._print_lines()
 
-    def trim(self, n=None):
-        if n is None:
-            n = self.nlines
-        if len(self.lines) <= n:
-            return  # Nothing to do
-        p = self.lines[n - 1][1]
-        self._value = self._value[p:]
-        print('trim', self._value.encode())
+    def append(self, s, ntrim=None):
+        self._add_lines(s)
+        if ntrim is None:  # Default to no. of lines that can fit
+            ntrim = self.nlines
+        if len(self.lines) > ntrim:
+            self.lines = self.lines[-ntrim:]
+        self._value = len(self.lines)
+        self.start = max(0, self._value - self.nlines)
+        self.show_if_current()
+
+    def scroll(self, n):
+        if n == 0 or self._value <= self.nlines:
+            return
+        self.start = max(0, min(self.start + n, self._value - self.nlines))
+        self.show_if_current()
 
 # Vector display
 class Pointer:

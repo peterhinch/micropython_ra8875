@@ -29,11 +29,11 @@ from micropython_ra8875.tft_local import setup
 import micropython_ra8875.support.font14 as font14
 import micropython_ra8875.support.font10 as font10
 
-def quitbutton(x=399, y=242):
+def quitbutton(x=379, y=242):
     def quit(button):
         Screen.shutdown()
     Button((x, y), height = 30, font = font14, callback = quit, fgcolor = RED,
-           text = 'Quit', shape = RECTANGLE, width = 80)
+           text = 'Quit', shape = RECTANGLE, width = 100)
 
 def fwdbutton(x, y, cls_screen, text='Next'):
     def fwd(button):
@@ -55,20 +55,24 @@ class BackScreen(Screen):
 
 # Create a random vector. Interpolate between current vector and the new one.
 # Change pointer color dependent on magnitude.
-async def txt_test(textbox):
-    phrases = ('short', 'longer line', 'much longer line with spaces', 'antidisestablishmentarianism', 'with\nline break')
-    n = 0
-    while True:
-        p = phrases[n % len(phrases)]
-        n += 1
-        textbox.trim()  # Discard lines that have scrolled off top
-        old = textbox.value()
-        textbox.value('\n'.join((old, 'Test {:3d} {:s}'.format(n, p))))
+async def txt_test(textbox, btns):
+    phr0 = ('short', 'longer line', 'much longer line with spaces',
+               'antidisestablishmentarianism', 'with\nline break')
+    for n in range(len(phr0)):
+        textbox.append('Test {:3d} {:s}'.format(n, phr0[n]), 15)
         await asyncio.sleep(1)
 
-# ****** STATE ******
-# Clip works (I think), although may have problem with very long word
-# Word wrap breaks the word 'line' discarding 1st 3 chars
+    for n in range(n, 15):
+        textbox.append('Scroll test {:3d}'.format(n), 15)
+        await asyncio.sleep(1)
+
+    if isinstance(btns, tuple):
+        for btn in btns:
+            btn.greyed_out(False)
+
+def btn_cb(button, tb1, tb2, n):
+    tb1.scroll(n)
+    tb2.scroll(n)
 
 class TScreen(Screen):
     def __init__(self, loop):
@@ -84,12 +88,27 @@ class TScreen(Screen):
                   'bgcolor' : DARKGREEN,
                   'font' : IFONT16,
                   }
+        btntable = {'fgcolor' : LIGHTBLUE,
+                    'font' : font14,
+                    'height' : 30,
+                    'width' : 100,
+                    'litcolor' : GREEN,
+                    'callback' : btn_cb,
+                    }
         fwdbutton(0, 242, BackScreen, 'Forward')
         quitbutton()
-        tb1 = Textbox((0, 0), 200, 6, **tbargs)
-        tb2 = Textbox((210, 0), 200, 6, clip = False, **tbargs)
-        loop.create_task(txt_test(tb1))
-        loop.create_task(txt_test(tb2))
+        tb1 = Textbox((0, 0), 200, 8, **tbargs)
+        tb2 = Textbox((210, 0), 200, 8, clip = False, **tbargs)
+        Label((0, 135), width = 200, value = 'Clipping', **labels)
+        Label((210, 135), width = 200, value = 'Wrapping', **labels)
+
+        btns = (Button((0, 180), text = 'Up', args = (tb1, tb2, 1), **btntable),
+                Button((120, 180), text = 'Down', args = (tb1, tb2, -1), **btntable))
+        for btn in btns:
+            btn.greyed_out(True)  # Disallow until textboxes are populated
+
+        loop.create_task(txt_test(tb1, None))
+        loop.create_task(txt_test(tb2, btns))
 
 
 print('Test TFT panel...')
