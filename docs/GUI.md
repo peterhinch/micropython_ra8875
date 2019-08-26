@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.13 Beta 15th Aug 2019.
+V0.14 Beta 26th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
