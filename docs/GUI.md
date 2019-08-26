@@ -475,6 +475,9 @@ clipped to the width of the control or may be word-wrapped. If the number of
 lines of text exceeds the height available, scrolling may be performed, either
 by calling a method or by touching the control.
 
+Works with fixed and variable pitch fonts. Tab characters are supported for
+Python fonts (not for the RA8875 internal font).
+
 Constructor mandatory positional arguments:
  1. `location` 2-tuple defining position.
  2. `width` Width of the object in pixels.
@@ -496,16 +499,26 @@ Keyword only arguments:
  * `repeat=True` Controls the behaviour of touch-based scrolling. By default
  a long press causes repeated scrolling. `False` requires a discrete press for
  each line movement.
+ * `tab=32` Tab space in pixels.
 
 Methods:
- * `append` Args `s, ntrim=None` Append the string `s` to the display and
- scroll up as required. By default this could lead to an ever growing list of
- lines: setting (say) `ntrim=15` ensures that only the most recent 15 lines are
- retained.
+ * `append` Args `s, ntrim=None, line=None` Append the string `s` to the
+ display and scroll up as required to show it. By default only the number of
+ lines which will fit on screen are retained. If an integer `ntrim=N` is
+ passed, only the last N lines are retained. If an integer (typically 0) is
+ passed in `line` the display will scroll to show that line.
  * `scroll` Arg `n` Number of lines to scroll. A negative number scrolls up. If
  scrolling would achieve nothing because there are no extra lines to display,
  nothing will happen.
  * `value` No args. Returns the number of lines of text stored in the widget.
+ * `clear` No args. Clears all lines from the widget and refreshes the display.
+ * `goto` Arg `line=None` Fast scroll to a line. By default shows the end of
+ the text. 0 shows the start.
+
+Fast updates:  
+Rendering text to the screen is relatively slow. To send a large amount of text
+the fastest way is to perform a single `append`. Text may contain newline
+(`'\n'`) characters as required. In that way rendering occurs once only.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

@@ -93,7 +93,7 @@ class TFT(RA8875):
         return (style[0], text_bgc, font)
 
     # Rudimentary: prints a single line. No handling of control chars
-    def print_left(self, x, y, s, style):
+    def print_left(self, x, y, s, style, tab=32):
         if s == '':
             return
         fgc, bgc, font = self.text_style(style)
@@ -101,9 +101,12 @@ class TFT(RA8875):
             self.draw_str(s, x, y, fgc, bgc, font.scale())
         else:
             for c in s:
-                fmv, rows, cols = font.get_ch(c)
-                self.draw_glyph(fmv, x, y, rows, cols, fgc, bgc)
-                x += cols
+                if c == '\t':
+                    x += tab - x % tab
+                else:
+                    fmv, rows, cols = font.get_ch(c)
+                    self.draw_glyph(fmv, x, y, rows, cols, fgc, bgc)
+                    x += cols
 
     def _getcolor(self, color):
         if self._is_grey:
@@ -543,15 +546,15 @@ class Label(NoTouch):
 
 class Textbox(Touchable):
     def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None,
-                 bgcolor=None, fontcolor=None, clip=True, repeat=True):
+                 bgcolor=None, fontcolor=None, clip=True, repeat=True, tab=32):
         height = nlines * font.height() + 2 * border if isinstance(border, int) else nlines * font.height()
         super().__init__(location, font, height, width, fgcolor, bgcolor,
                          fontcolor, border, repeat, 0, 0)
         self.nlines = nlines
         self.clip = clip
+        self.tab = tab
         self.lines = []
         self.start = 0  # Start line for display
-        self.updating = False
 
     def _add_lines(self, s):
         width = self.width - 2 * self.border
@@ -573,8 +576,10 @@ class Textbox(Touchable):
                 self.lines.append(s[ls : n])
                 newline = True
                 continue  # Line fits window
-
-            col += font.get_ch(c)[2]  # width of current char
+            if c == '\t':
+                col += self.tab - col % self.tab
+            else:
+                col += font.get_ch(c)[2]  # width of current char
             if col > width:
                 if self.clip:
                     p = s[ls :].find('\n')  # end of 1st line
@@ -597,7 +602,7 @@ class Textbox(Touchable):
                 newline = True
 
     def _print_lines(self):
-        if self.value():
+        if len(self.lines):
             tft = self.tft
             bw = self.border
             x = self.location[0] + bw
@@ -606,7 +611,7 @@ class Textbox(Touchable):
             font = self.text_style[2]
             #for line in self.lines[-self.nlines : ]:
             for line in self.lines[self.start : self.start + self.nlines]:
-                tft.print_left(x, y, line, self.text_style)
+                tft.print_left(x, y, line, self.text_style, self.tab)
                 y += font.height()
                 x = xstart
 
@@ -619,35 +624,39 @@ class Textbox(Touchable):
         tft.fill_rectangle(x + bw, y + bw, x + w - bw, y + self.height - bw, self.bgcolor)
         self._print_lines()
 
-    def append(self, s, ntrim=None):
-        self.updating = True
+    def append(self, s, ntrim=None, line=None):
         self._add_lines(s)
         if ntrim is None:  # Default to no. of lines that can fit
             ntrim = self.nlines
         if len(self.lines) > ntrim:
             self.lines = self.lines[-ntrim:]
-        self._value = len(self.lines)
-        self.start = max(0, self._value - self.nlines)
-        self.show_if_current()
-        self.updating = False
+        self.goto(line)
 
-    def scroll(self, n):
-        if n == 0 or self._value <= self.nlines:
+    def scroll(self, n):  # Relative scrolling
+        value = len(self.lines)
+        if n == 0 or value <= self.nlines:
             return
         s = self.start
-        self.start = max(0, min(self.start + n, self._value - self.nlines))
+        self.start = max(0, min(self.start + n, value - self.nlines))
         if s != self.start:
-            self.updating = True
             self.show_if_current()
-        self.updating = False
 
     def _touched(self, x, y): # Was touched
-        if not self.updating:
-            self.scroll(-1 if  2 * y < self.height else 1)
+        self.scroll(-1 if  2 * y < self.height else 1)
 
     def value(self):
-        return self._value
+        return len(self.lines)
 
+    def clear(self):
+        self.lines = []
+        self.show_if_current()
+
+    def goto(self, line=None):  # Absolute scrolling
+        if line is None:
+            self.start = max(0, len(self.lines) - self.nlines)
+        else:
+            self.start = max(0, min(line, len(self.lines) - self.nlines))
+        self.show_if_current()
 
 # Vector display
 class Pointer:

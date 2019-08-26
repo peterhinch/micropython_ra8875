@@ -29,6 +29,8 @@ from micropython_ra8875.tft_local import setup
 import micropython_ra8875.support.font14 as font14
 import micropython_ra8875.support.font10 as font10
 
+# **** STANDARD BUTTON TYPES ****
+
 def quitbutton(x=379, y=242):
     def quit(button):
         Screen.shutdown()
@@ -47,14 +49,76 @@ def backbutton(x=399, y=242):
     Button((x, y), height = 30, font = font14, fontcolor = BLACK, callback = back,
            fgcolor = CYAN,  text = 'Back', shape = RECTANGLE, width = 80)
 
+# **** STANDARDISE CONTROLS ACROSS SCREENS ****
+# Appearance for Textbox instances
+tbargs = {'fontcolor' : GREEN,
+            'fgcolor' : RED,
+            'bgcolor' : DARKGREEN,
+            'repeat' : False,
+            }
+
+# Appearance for buttons
+btntable = {'fgcolor' : LIGHTBLUE,
+            'font' : font14,
+            'height' : 30,
+            'width' : 100,
+            'litcolor' : GREEN,
+            }
+
+# Appearance for labels
+labels = {'fontcolor' : WHITE,
+            'border' : 2,
+            'fgcolor' : RED,
+            'bgcolor' : DARKGREEN,
+            'font' : font10,
+            }
+
+# **** NEXT SCREEN CLASS ****
+
+# Fast populate a textbox
+def populate(button, tb):
+    s = '''The textbox displays multiple lines of text in a field of fixed dimensions. \
+Text may be clipped to the width of the control or may be word-wrapped. If the number \
+of lines of text exceeds the height available, scrolling may be performed, either \
+by calling a method or by touching the control.
+'''
+    tb.append(s, ntrim = 100, line = 0)
+
+def clear(button, tb):
+    tb.clear()
+
 class BackScreen(Screen):
     def __init__(self):
         super().__init__()
-        Label((0, 0), font = font14, value = 'Ensure back refreshes properly')
         backbutton()
+        tb = Textbox((0, 0), 200, 8, font=IFONT16, clip = False, tab=64, **tbargs)
+        Button((0, 180), text = 'Fill', callback = populate, args = (tb,), **btntable)
+        Button((120, 180), text = 'Clear', callback = lambda b, tb: tb.clear(), args = (tb,), **btntable)
 
-# Create a random vector. Interpolate between current vector and the new one.
-# Change pointer color dependent on magnitude.
+# **** TAB SCREEN CLASS ****
+
+def pop_tabs(button, tb):
+    s = '''x\t100.0\t1.76
+alpha\t1.73\t2.51
+beta\t91.84\t8.76
+gamma\t9.29\t0.05
+'''
+    tb.append(s)
+
+def clear(button, tb):
+    tb.clear()
+
+class TabScreen(Screen):
+    def __init__(self):
+        super().__init__()
+        backbutton()
+        tb = Textbox((0, 0), 200, 8, font=font10, clip = False, tab=64, **tbargs)
+        Button((0, 180), text = 'Fill', callback = pop_tabs, args = (tb,), **btntable)
+        Button((120, 180), text = 'Clear', callback = lambda b, tb: tb.clear(), args = (tb,), **btntable)
+
+# **** MAIN SCREEEN CLASS ****
+
+# Coroutine slowly populates a text box
 async def txt_test(textbox, btns):
     phr0 = ('short', 'longer line', 'much longer line with spaces',
                'antidisestablishmentarianism', 'with\nline break')
@@ -70,6 +134,7 @@ async def txt_test(textbox, btns):
         for btn in btns:
             btn.greyed_out(False)
 
+# Callback for scroll buttons
 def btn_cb(button, tb1, tb2, n):
     tb1.scroll(n)
     tb2.scroll(n)
@@ -77,34 +142,16 @@ def btn_cb(button, tb1, tb2, n):
 class TScreen(Screen):
     def __init__(self, loop):
         super().__init__()
-        labels = {'fontcolor' : WHITE,
-                  'border' : 2,
-                  'fgcolor' : RED,
-                  'bgcolor' : DARKGREEN,
-                  'font' : font10,
-                  }
-        tbargs = {'fontcolor' : GREEN,
-                  'fgcolor' : RED,
-                  'bgcolor' : DARKGREEN,
-                  'font' : IFONT16,
-                  'repeat' : False,
-                  }
-        btntable = {'fgcolor' : LIGHTBLUE,
-                    'font' : font14,
-                    'height' : 30,
-                    'width' : 100,
-                    'litcolor' : GREEN,
-                    'callback' : btn_cb,
-                    }
-        fwdbutton(0, 242, BackScreen, 'Forward')
+        fwdbutton(0, 242, BackScreen, 'Fast')
+        fwdbutton(120, 242, TabScreen, 'Tabs')
         quitbutton()
-        tb1 = Textbox((0, 0), 200, 8, **tbargs)
-        tb2 = Textbox((210, 0), 200, 8, clip = False, **tbargs)
+        tb1 = Textbox((0, 0), 200, 8, font=IFONT16, **tbargs)
+        tb2 = Textbox((210, 0), 200, 8, font=IFONT16, clip = False, **tbargs)
         Label((0, 135), width = 200, value = 'Clipping', **labels)
         Label((210, 135), width = 200, value = 'Wrapping', **labels)
 
-        btns = (Button((0, 180), text = 'Up', args = (tb1, tb2, 1), **btntable),
-                Button((120, 180), text = 'Down', args = (tb1, tb2, -1), **btntable))
+        btns = (Button((0, 180), text = 'Up', callback = btn_cb, args = (tb1, tb2, 1), **btntable),
+                Button((120, 180), text = 'Down', callback = btn_cb, args = (tb1, tb2, -1), **btntable))
         for btn in btns:
             btn.greyed_out(True)  # Disallow until textboxes are populated
 
@@ -112,7 +159,12 @@ class TScreen(Screen):
         loop.create_task(txt_test(tb2, btns))
 
 
-print('Test TFT panel...')
+print('''Main screen populates text boxes slowly to show
+clipping and wrapping in action. "Fast" screen
+shows fast updates using internal font. "Tab"
+screen shows use of tab characters with Python
+font.
+Text boxes may be scrolled by touching them.''')
 # Instantiate loop before calling setup if you need to change queue sizes
 loop = asyncio.get_event_loop()
 setup()
