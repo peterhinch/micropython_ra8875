@@ -40,4 +40,4 @@ Device driver documentation is [here](docs/DRIVER.md). A sample image:
 
 ![Horizontal sliders](./docs/horiz_slider_2.JPG)
 
-[Further images]((./docs/IMAGES.md)
+[Further images](./docs/IMAGES.md)
