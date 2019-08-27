@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.14 Beta 26th Aug 2019.
+V0.15 Beta 27th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -19,7 +19,7 @@ colors are clear and vibrant.
 
 The library uses arbitrary fonts converted from `ttf` or `otf` formats using
 [font_to_py.py](https://github.com/peterhinch/micropython-font-to-py.git). Two
-samples are provided.
+sample fonts are provided.
 
 An extension for plotting simple graphs is provided and is described
 [here](./LPLOT.md).
@@ -28,9 +28,9 @@ An extension for plotting simple graphs is provided and is described
 
 1. [Getting started](./GUI.md#1-getting-started)  
   1.1 [Installation](./GUI.md#11-installation)  
-  1.2 [Python files](./GUI.md#12-python-files)  
-  1.3 [Calibration](./GUI.md#13-calibration)  
-  1.4 [RA8875 issues](./GUI.md#14-ra8875-issues)  
+  1.2 [Calibration](./GUI.md#12-calibration)  
+  1.3 [Python files](./GUI.md#13-python-files)  
+  1.4 [A minimal code example](./GUI.md#14-a-minimal-code-example)  
 2. [Concepts](./GUI.md#2-concepts)  
   2.1 [Terminology](./GUI.md#21-terminology)  
   2.2 [Coordinates](./GUI.md#22-coordinates)  
@@ -61,8 +61,8 @@ An extension for plotting simple graphs is provided and is described
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
 8. [Fonts](./GUI.md#8-fonts)  
 9. [Memory issues](./GUI.md#9-memory-issues)  
-10. [References](./GUI.md#10-references)  
-11. [Possible enhancements](./GUI.md#11-possible-enhancements)  
+10. [RA8875 issues](./GUI.md#10-ra8875-issues)  
+11. [References](./GUI.md#11-references)  
 
 # 1. Getting started
 
@@ -120,35 +120,40 @@ $ rshell cp -r micropython_ra8875/ /flash
 
 ### Testing
 
-Copy the following and paste at the REPL (ctrl-e, ctrl-shift-v, ctrl-d).
+The calibration procedure below provides confirmation of correct wiring and
+functional hardware.
 
+## 1.2 Calibration
+
+The touch panel requires calibration to achieve sufficient accuracy for the GUI.
+This is done by issuing:
 ```python
-from micropython_ra8875.ugui import Screen, Button
-from micropython_ra8875.tft_local import setup
-import micropython_ra8875.support.font10 as font10
-from micropython_ra8875.support.constants import *
-
-def quitbutton():
-    def quit(button):
-        Screen.shutdown()
-    Button((109, 107), font = font10, callback = quit, fgcolor = RED,
-           text = 'Quit', shape = RECTANGLE)
-
-class BaseScreen(Screen):
-    def __init__(self):
-        super().__init__()
-        quitbutton()
-setup()
-Screen.change(BaseScreen)
+>>> import micropython_ra8875.driver.cal
 ```
+The top left and bottom right corners of the visible screen should be
+identified by yellow lines. If this does not occur, check your `tft_local.py`
+file for the correct pin numbers and display size; check your wiring.
+
+Using a stylus for accuracy, touch the intersection of the top left lines.
+Repeat for the bottom right corner. The REPL will show the coordinates read by
+the device. The last values read for each corner will be retained. Quit the
+program with `ctrl-c`: it will ask if you want to keep these readings. If you
+confirm the data will be stored on the target (in the file `tft_local.py`).
+
+It is suggested that you then run one or more of the demos. Hit `ctrl-d` to
+reset the board and issue (for example):
+```python
+>>> import micropython_ra8875.demos.hst
+```
+Other demos are listed below.
+
 Depending on the target you may get a memory error. This indicates that the
 target has too little RAM to compile `ugui.py`. See
 [section 9](./GUI.md#9-memory-issues) for solutions to this.
 
-Note that the 'Quit' button will probably respond to a touch not coincident
-with it: this is because the touchpanel is uncalibrated at this stage.
+###### [Jump to Contents](./GUI.md#contents)
 
-## 1.2 Python files
+## 1.3 Python files
 
 Core files:
  1. `ugui.py` The micro GUI library.
@@ -185,7 +190,7 @@ Demo programs in the `demos` subdirectory:
  overlaying screen quits.
  6. `dialog.py` Modal dialog boxes.
  7. `pt.py` Plot test.
- 8. `ktif.py` Uses internal and external fonts.
+ 8. `ktif.py` A demo using internal and external fonts.
  9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
@@ -193,46 +198,28 @@ Demo programs in the `demos` subdirectory:
 It is wise to issue `ctrl-d` to soft reset the target before importing a module
 which uses the library. The demo programs require a `ctrl-d` before import.
 
-## 1.3 Calibration
+## 1.4 A minimal code example
 
-The touch panel requires calibration to achieve sufficient accuracy for the GUI.
-This is done by issuing
+This illustrates the "hello world" of the GUI:
 ```python
->>> import micropython_ra8875.driver.cal
+from micropython_ra8875.ugui import Screen, Button
+from micropython_ra8875.tft_local import setup
+import micropython_ra8875.support.font10 as font10
+from micropython_ra8875.support.constants import *
+
+def quitbutton():
+    def quit(button):
+        Screen.shutdown()
+    Button((109, 107), font = font10, callback = quit, fgcolor = RED,
+           text = 'Quit', shape = RECTANGLE)
+
+class BaseScreen(Screen):
+    def __init__(self):
+        super().__init__()
+        quitbutton()
+setup()
+Screen.change(BaseScreen)
 ```
-The top left and bottom right corners of the visible screen should be
-identified by yellow lines. If this does not occur, check your `tft_local.py`
-file for the correct pin numbers and display size; check your wiring.
-
-Using a stylus, touch the intersection of the top left lines and note the
-values printed at the REPL: these are the x and y values for the corner. Repeat
-for the bottom right corner. Then edit your `tft_local.py` file to reflect
-these values (x_left, y_left, x_right, y_right), and copy to the device.
-```python
-    tft.calibrate(25, 25, 459, 243)
-```
-It is suggested that you then run one or more of the demos. Hit `ctrl-d` to
-reset the board and issue (for example):
-```python
->>> import micropython_ra8875.demos.hst
-```
-Documentation references e.g. for the device driver may be found in
-[section 9](./GUI.md#9-references).
-
-## 1.4 RA8875 issues
-
-The RA8875 has a couple of limitations. In my testing touch events always
-produce two or more detections with slightly different coordinates. On some
-widgets this results in flicker as the control updates multiple times. The GUI
-does not use double-click events: any attempt to detect these would be suspect.
-
-The `tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
-delay in ms, normally 0. A higher value (say 200) mitigates this at the cost of
-slowing the response to touches.
-
-Secondly reading back the contents of the chip's framebuffer is unreliable. The
-`Slider`, `HorizSlider` and `Meter` controls have been redesigned to remove the
-need for this.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -530,7 +517,7 @@ angles in radians with zero appearing as a vertical pointer. Positive angles
 appear as clockwise rotation of the pointer. The object can display multiple
 angles using pointers of differing lengths (like a clock face).
 
-See also the [vector display](./GUI.md#55-vector-display).
+See also the [vector display](./GUI.md#56-vector-display).
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -1105,6 +1092,8 @@ be used in any place where a font is required. Instances, identified by height,
 are `IFONT16`, `IFONT32`, `IFONT48` and `IFONT64`. For example usage see
 `demos/ktif.py`.
 
+###### [Jump to Contents](./GUI.md#contents)
+
 # 9. Memory issues
 
 When a Python file is imported the MicroPython compiler converts the code to
@@ -1135,7 +1124,23 @@ Owing to a current firmware issue (27th Aug 2019) the driver test program
 `ra8875_test.py` will not work as frozen bytecode. The GUI and calibration
 programs are OK.
 
-# 10. References
+###### [Jump to Contents](./GUI.md#contents)
+
+# 10. RA8875 issues
+
+The RA8875 has some limitations. In my testing touch events always produce two
+or more detections with slightly different coordinates. On some widgets this
+results in flicker as the control updates multiple times. The GUI does not use
+double-click events: any attempt to detect these would be suspect.
+
+The `tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
+delay in ms, normally 0. A higher value (say 200) mitigates flicker at the cost
+of slowing the response to touches.
+
+Other issues are detailed in [the driver document](./DRIVER.md). These do not
+affect GUI operation.
+
+# 11. References
 
 Documentation for the underlying libraries may be found at these sites.  
 
@@ -1148,14 +1153,3 @@ Other references:
 [uasyncio libraries and notes](https://github.com/peterhinch/micropython-async)  
 
 ###### [Jump to Contents](./GUI.md#contents)
-
-# 11. Possible enhancements
-
-Implement a vector display object similar to that in
-[nano-gui](https://github.com/peterhinch/micropython-nano-gui.git).
-
-Try to improve the handling of the spurious touch events from the hardware to
-reduce flicker.
-
-
-

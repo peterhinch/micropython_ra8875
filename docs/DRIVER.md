@@ -150,7 +150,11 @@ evident effect on this behaviour.
 
 The RA8875 claims to provide a means of reading back the contents of the frame
 buffer. This seems broken. I removed functionality which aimed to support it as
-the outcome was not deterministic.
+the outcome was not deterministic. GUI controls which formerly relied on this
+were redesigned so as not to need it.
+
+As stated above the `clear_scr` method is not reliable. Despite conforming to
+the datasheet it sometimes fills the screen with a non-black color.
 
 # 4. References
 

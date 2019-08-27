@@ -23,6 +23,8 @@
 # THE SOFTWARE.
 
 import uasyncio as asyncio
+import os
+import sys
 from micropython_ra8875.support.constants import *  # Colors
 from micropython_ra8875.tft_local import setup
 
@@ -44,17 +46,20 @@ Adapt tft_local.py accordingly.
 
 Press ctrl-c to quit.'''
 
-#print_string(msg1, 0, 30)
 x = 50
 y = 80
 for s in msg1.split('\n'):
     tft.draw_str(s, x, y, GREEN, BLACK)
     y += 16
 
+data = [0, 0, 0, 0]
 async def do_touch(tft):
     while True:
         if tft.ready():
-            print(tft.get_touch())
+            x, y = tft.get_touch()
+            offs = 0 if x < 100 else 2
+            data[offs : offs + 2] = x, y
+            print(x, y)
         await asyncio.sleep_ms(20)
 
 print('See on-screen instructions.')
@@ -63,4 +68,26 @@ try:
     loop.run_until_complete(do_touch(tft))
 except KeyboardInterrupt:
     loop.close()
-print('Done')
+
+if not input('Keep these calibration values (y/n)? ').lower() == 'y':
+    print('No changes made. Quitting.')
+    sys.exit(0)
+
+fn = 'micropython_ra8875/tft_local.py'
+try:
+    with open(fn, 'r') as f:
+        lines = f.readlines()
+except OSError:
+    print('Could not open {:s} for reading.'.format(fn))
+    sys.exit(1)
+try:
+    with open(fn, 'w') as f:
+        for line in lines:
+            if 'tft.calibrate' in line:
+                line = '    tft.calibrate({:d},{:d},{:d},{:d})  # Auto updated by cal.py\n'.format(*data)
+            f.write(line)
+except OSError:
+    print('Could not open {:s} for writing.'.format(fn))
+    sys.exit(1)
+
+print('Successfully updated your calibration data.')
