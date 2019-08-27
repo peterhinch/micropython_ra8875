@@ -36,4 +36,8 @@ device driver code. I am unlikely to be able to support this.
 
 Most GUI users will require only the [GUI document](docs/GUI.md).
 
-Device driver documentation is [here](docs/DRIVER.md).
+Device driver documentation is [here](docs/DRIVER.md). A sample image:
+
+![Horizontal sliders](./docs/horiz_slider_2.JPG)
+
+[Further images]((./docs/IMAGES.md)
