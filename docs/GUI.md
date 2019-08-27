@@ -8,7 +8,8 @@ been tested with Pyboard 1.1 and with Pyboard D series with a 4.3 inch Adafruit
 display. It is designed also to work with the 7 inch display but to date this
 has not been tested.
 
-It should work with any target which supports the Viper code generator.
+It should work with most targets supporting the Viper code generator. Currently
+this excludes ESP32. RAM limitations mean it is unlikely to work on ESP8266.
 
 ![Image](./dials.JPG)
 
@@ -1130,11 +1131,9 @@ Instructions on doing this may be found
 involves copying the directory tree to a directory on your PC, compiling a
 build and installing it.
 
-In my testing the device driver was not frozen successfully because it uses the
-native and viper code emitters. I froze the files in the root directory and the
-`demos` and `support` subdirectories. On the target's filesystem I created the
-`micropython_ra8875` directory and its `driver` subdirectory and copied the
-contents into there. This was successful.
+Owing to a current firmware issue (27th Aug 2019) the driver test program
+`ra8875_test.py` will not work as frozen bytecode. The GUI and calibration
+programs are OK.
 
 # 10. References
 

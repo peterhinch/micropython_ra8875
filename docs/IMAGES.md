@@ -25,6 +25,22 @@ Widget colors can change dynamically.
 
 ![Dials](./dials.JPG)
 
+# Text boxes: word wrap and tab stops
+
+![Wrap](./textbox_wrap.JPG)
+
+![Tabs](./textbox_tab.JPG)
+
+These support scrolling programmatically or via touch.
+
+# Vector display
+
+![Vectors](./vector.JPG)
+
+Vectors (as a `complex`) may be shown in "compass" or "clock" styles. Length
+and angle change as the vector alters. The color of any vector can be changed
+dynamically in uer code.
+
 # Modal Dialog Box
 
 ![Dialog box](./dialog.JPG)
