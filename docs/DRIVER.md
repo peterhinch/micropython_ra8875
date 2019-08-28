@@ -8,7 +8,8 @@ readily be extended to support additional primitives provided by the chip.
 
 The GUI subclasses `RA8875` to provide a `TFT` class. This handles 'greying
 out' of disabled widgets by modifying the colors passed to the superclass
-methods. For convenience `TFT` is documented here.
+methods, also methods for rendering strings and displaying vectors. For
+convenience `TFT` is documented here.
 
 The RA8875 documentation is not the world's best and the chip has bugs. The
 driver was written by referring to a number of sources, notably the Adafruit
@@ -23,7 +24,10 @@ and for the sources of information used.
 # 1. The TFT class
 
 Where `color` is specified this is an `(r, g, b)` tuple where r, g and b are in
-range 0 to 255 inclusive.
+range 0 to 255 inclusive. `fgcolor` and `bgcolor` represent foregound and
+background colors.
+
+Text styles are 3-tuples comprising `(fgcolor, bgcolor, font)`.
 
 Constructor. This takes the following mandatory arguments.  
  1. `spi` An initialised SPI bus instance.
@@ -33,38 +37,48 @@ Constructor. This takes the following mandatory arguments.
  of 1. Used to perform a hardware reset.
  4. `width` Display width and height. Supported values are 480x272 and 800x480.
  5. `height`
- 6. `loop` An event loop instance or `None`. In the latter case the touch panel
- `uasyncio` task will not be run, so the touch panel will be inoperative.
+ 6. `tdelay` Touch delay (in ms). If a value > 0 is passed, the GUI suppresses
+ multiple touches by delaying responses. See [section 3](./DRIVER.md#3-chip-limitations).
+ 7. `loop` An event loop instance or `None`. In the latter case the touch panel
+ will be inoperative.
 
 Methods.
- 1. `desaturate` Arg `value=None`. If a `bool` is passed, defines whether
+ 1. `get_fgcolor` Return system `fgcolor`.
+ 2. `get_bgcolor` Return system `bgcolor`.
+ 3. `text_style` Arg `style`. Accepts a text style, returns one with colors
+ modified by the current greyed-out status.
+ 4. `desaturate` Arg `value=None`. If a `bool` is passed, defines whether
  greying-out is done by dimming (`False`) or desaturating (`True`) objects. By
  default the current status is returned.
- 2. `dim` Arg `factor=None` If a numeric value is passed, sets the amount of
+ 5. `dim` Arg `factor=None` If a numeric value is passed, sets the amount of
  dimming to be used if this option is selected. A typical value is 2, meaning
  that the brightness of colors is halved. Returns the current factor.
- 3. `usegrey` Arg `val`. Set current greyed-out status. If `True` is passed,
+ 6. `usegrey` Arg `val`. Set current greyed-out status. If `True` is passed,
  subsequent pixels will be rendered with the specified `color` modified to the
  current greyed-out style. If `False` is passed they will be rendered normally.
  Note that `desaturate` and `dim` methods set the grey style. They only affect
- rendering when the greyed- out status is set via `usegrey`.
- 4. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
- 5. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
- 6. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
+ rendering when the greyed-out status is set via `usegrey`.
+ 7. `print_centered` Args `x, y, s, style`. Renders string `s` centred at
+ `x, y`.
+ 8 `print_left` Args `x, y, s, style, tab=32`. Renders string `s` starting at
+ `x, y`. The `tab` value represents the size of a tab stop in pixels.
+ 9. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
+ 10. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
+ 11. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
  rectangle.
- 7. `fill_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a filled clipped
+ 12. `fill_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a filled clipped
  rectangle.
- 8. `draw_circle` Args `x, y, radius, color` Draw a circle.
- 9. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
- 10. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
- 11. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
- 12. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
+ 13. `draw_circle` Args `x, y, radius, color` Draw a circle.
+ 14. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
+ 15. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
+ 16. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
+ 17. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
  `x2, y2`.
- 13. `text_style` Arg `style=None`. If `None` is passed, return the current
- text style. See below for definition of text style.
- 14. `print_string` Args `s, x, y` Print string `s` at location `x, y` in the
- current style. This method is rudimentary and does not handle control chars or
- newlines.
+ 18. `pline` Args `origin, vec, color`. Draw a line using complex coordinates:
+ `origin` and `vec` are complex with `vec` being relative to `origin`.
+ 19. `arrow` Args `origin, vec, lc, color` As above, with the vector
+ represented as an arrow. The scalar `lc` is the length of the chevrons in
+ pixels.
 
 ### Text style
 
@@ -146,7 +160,9 @@ The RA8875 touch interface has an unexpected behaviour. A single brief touch
 always appears as at least two touch events with different coordinates. The
 last of these seems to be the correct one (subject to calibration). The driver
 makes no attempt to mitigate this. The setting of the debounce bit had no
-evident effect on this behaviour.
+evident effect on this behaviour. This can cause flicker as widgets update
+multiple times. The `TFT` constructor arg `tdelay` attempts to mitigate this by
+delaying any response untile `tdelay` ms after the last touch event.
 
 The RA8875 claims to provide a means of reading back the contents of the frame
 buffer. This seems broken. I removed functionality which aimed to support it as
