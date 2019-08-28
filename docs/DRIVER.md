@@ -23,11 +23,17 @@ and for the sources of information used.
 
 # 1. The TFT class
 
+### Terminology
+
 Where `color` is specified this is an `(r, g, b)` tuple where r, g and b are in
 range 0 to 255 inclusive. `fgcolor` and `bgcolor` represent foregound and
 background colors.
 
-Text styles are 3-tuples comprising `(fgcolor, bgcolor, font)`.
+Text styles are 3-tuples comprising `(fgcolor, bgcolor, font)`. `font` may be
+the name of an imported Python font or an instance of an internal font (defined
+in `constants.py`).
+
+### Class
 
 Constructor. This takes the following mandatory arguments.  
  1. `spi` An initialised SPI bus instance.
@@ -80,16 +86,10 @@ Methods.
  represented as an arrow. The scalar `lc` is the length of the chevrons in
  pixels.
 
-### Text style
-
-This is a `(fgcolor, bgcolor, font)` tuple where `fgcolor` and `bgcolor` are
-foreground and background colors as `(r, g, b)` tuples. `font` is the name of
-an imported Python font.
-
 # 2. The RA8875 class
 
 Colors are specified as (r, g, b) tuples. They are converted to 16 bit RGB565
-values by the `RA8875.to_rgb565` static method.
+values by the `RA8875._to_rgb565` private static method.
 
 Constructor. This takes the following mandatory arguments.  
  1. `spi` An initialised SPI bus instance.
