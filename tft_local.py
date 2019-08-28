@@ -57,5 +57,5 @@ def setup(driver_test=False, use_async=True):
     tft = TFT(spi, pincs, pinrst, _WIDTH, _HEIGHT, _TOUCH_DELAY, loop)
     # Touch panel calibration values xmin, ymin, xmax, ymax
     # See docs for calibration procedure
-    tft.calibrate(25, 25, 459, 243)  # *** EDIT THIS ***
+    tft.calibrate(25, 25, 459, 243)  # *** To be updated by cal.py ***
     Screen.setup(tft, tft)

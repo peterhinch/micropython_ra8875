@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 import uasyncio as asyncio
-import os
+import uos as os
 import sys
 from micropython_ra8875.support.constants import *  # Colors
 from micropython_ra8875.tft_local import setup
@@ -73,21 +73,23 @@ if not input('Keep these calibration values (y/n)? ').lower() == 'y':
     print('No changes made. Quitting.')
     sys.exit(0)
 
-fn = 'micropython_ra8875/tft_local.py'
+source = 'micropython_ra8875/tft_local.py'
+temp = 'micropython_ra8875/tft_local.bak'
 try:
-    with open(fn, 'r') as f:
-        lines = f.readlines()
-except OSError:
-    print('Could not open {:s} for reading.'.format(fn))
-    sys.exit(1)
-try:
-    with open(fn, 'w') as f:
-        for line in lines:
+    with open(source, 'r') as fr, open(temp, 'w') as fw:
+        for line in fr:
             if 'tft.calibrate' in line:
                 line = '    tft.calibrate({:d},{:d},{:d},{:d})  # Auto updated by cal.py\n'.format(*data)
-            f.write(line)
+            fw.write(line)
 except OSError:
-    print('Could not open {:s} for writing.'.format(fn))
+    print('Could not open {:s} for reading or {:s} for writing.'.format(source, temp))
+    sys.exit(1)
+
+try:
+    os.remove(source)
+    os.rename(temp, source)
+except OSError:
+    print('Could not replace {:s} with {:s}.'.format(source, temp))
     sys.exit(1)
 
 print('Successfully updated your calibration data.')
