@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.15 Beta 27th Aug 2019.
+V0.16 Beta 30th Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -24,12 +24,19 @@ sample fonts are provided.
 An extension for plotting simple graphs is provided and is described
 [here](./LPLOT.md).
 
+### V0.16 Refactor
+
+Widgets are implemented as modules in the `widgets` directory. This reduces RAM
+usage: the application only imports widgets that it uses. The structure enables
+the addition of new widgets without the need to change the core GUI module and
+without increasing the RAM usage of existing applications.
+
 # Contents
 
 1. [Getting started](./GUI.md#1-getting-started)  
   1.1 [Installation](./GUI.md#11-installation)  
   1.2 [Calibration](./GUI.md#12-calibration)  
-  1.3 [Python files](./GUI.md#13-python-files)  
+  1.3 [Demo scripts](./GUI.md#13-demo-scripts)  
   1.4 [A minimal code example](./GUI.md#14-a-minimal-code-example)  
 2. [Concepts](./GUI.md#2-concepts)  
   2.1 [Terminology](./GUI.md#21-terminology)  
@@ -153,31 +160,13 @@ target has too little RAM to compile `ugui.py`. See
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 1.3 Python files
+## 1.3 Demo scripts
 
-Core files:
- 1. `ugui.py` The micro GUI library.
- 2. `tft_local.py` Local hardware definition. This file should be edited to
- match your hardware.
-
-Optional files:
- 1. `plot.py` The plot module.
-
-Device driver in the `driver` subdirectory:
- 1. `ra8875.py` The device diver.
- 2. `cal.py` Touchscreen calibration utility.
- 3. `ra8875_test.py` Driver test program. See [RA8875 driver](./DRIVER.md).
-
-Support files in the `support` subdirectory:
- 1. `constants.py` Constants such as colors and shapes.
- 2. `asyn.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
- 3. `aswitch.py` Has a `Delay_ms` class for retriggerable delays. From above.
- 4. `font10.py` Fonts used by the demo programs.
- 5. `font14.py` Ditto. These are generated from the free font `FreeSans.ttf`.
-
-Fonts apart, these files are necessary for the GUI to run.
-
-Demo programs in the `demos` subdirectory:
+These are run at the REPL by issuing a `ctrl-d` soft reset, then importing them
+e.g.
+```python
+import micropython_ra8875.demos.vst
+```
  1. `vst.py` A test program for vertical linear sliders. Also demos an
  asynchronous coroutine and linked sliders.
  2. `hst.py` Tests horizontal slider controls, meter and LED. Demos
@@ -195,17 +184,15 @@ Demo programs in the `demos` subdirectory:
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
 
-It is wise to issue `ctrl-d` to soft reset the target before importing a module
-which uses the library. The demo programs require a `ctrl-d` before import.
-
 ## 1.4 A minimal code example
 
 This illustrates the "hello world" of the GUI:
 ```python
-from micropython_ra8875.ugui import Screen, Button
-from micropython_ra8875.tft_local import setup
-import micropython_ra8875.support.font10 as font10
+from micropython_ra8875.ugui import Screen
 from micropython_ra8875.support.constants import *
+from micropython_ra8875.widgets.buttons import Button
+from micropython_ra8875.fonts import font10
+from micropython_ra8875.tft_local import setup
 
 def quitbutton():
     def quit(button):
@@ -299,13 +286,14 @@ The `Screen` class is configured in `tft_local.py`.
 
 The following illustrates the structure of a minimal program:
 ```python
-from micropython_ra8875.ugui import Screen, Button
+from micropython_ra8875.ugui import Screen
+from micropython_ra8875.support.constants import *
+from micropython_ra8875.widgets.buttons import Button
+from micropython_ra8875.fonts import font10
 from micropython_ra8875.tft_local import setup
-import micropython_ra8875.support.font10 as font10
-from micropython_ra8875.support.constants import *  # colors and shapes
 
 def quitbutton():
-    def quit(button):  # Callback for button press
+    def quit(button):
         Screen.shutdown()
     Button((109, 107), font = font10, callback = quit, fgcolor = RED,
            text = 'Quit', shape = RECTANGLE)
@@ -314,8 +302,8 @@ class BaseScreen(Screen):
     def __init__(self):
         super().__init__()
         quitbutton()
-setup()  # Initialise hardware, register touchscreen calibration
-Screen.change(BaseScreen)  # Start the GUI
+setup()
+Screen.change(BaseScreen)
 ```
 
 The last line causes the Screen class to instantiate your `BaseScreen` and to
@@ -347,10 +335,12 @@ in the constructor. This arrangement facilitates communication between objects
 on the screen. The following presents an outline of this approach:
 
 ```python
-from micropython_ra8875.tft_local import setup
-import micropython_ra8875.support.font10 as font10
+from micropython_ra8875.ugui import Screen
 from micropython_ra8875.support.constants import *
-from micropython_ra8875.ugui import Screen, Button, Label
+from micropython_ra8875.widgets.buttons import Button
+from micropython_ra8875.widgets.label import Label
+from micropython_ra8875.fonts import font10
+from micropython_ra8875.tft_local import setup
 
 def backbutton(x, y):
     def back(button):  # A callback defined locally
@@ -435,6 +425,9 @@ These classes provide ways to display data and are not touch sensitive.
 
 Displays a single line of text in a fixed length field. The height of a label
 is determined by the metrics of the specified font.
+```python
+from micropython_ra8875.widgets.label import Label
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -465,6 +458,9 @@ by calling a method or by touching the control.
 
 Works with fixed and variable pitch fonts. Tab characters are supported for
 Python fonts (not for the RA8875 internal font).
+```python
+from micropython_ra8875.ugui.widgets.textbox import Textbox
+```
 
 Constructor mandatory positional arguments:
  1. `location` 2-tuple defining position.
@@ -518,7 +514,9 @@ appear as clockwise rotation of the pointer. The object can display multiple
 angles using pointers of differing lengths (like a clock face).
 
 See also the [vector display](./GUI.md#56-vector-display).
-
+```python
+from micropython_ra8875.widgets.dial import Dial
+```
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
 
@@ -544,6 +542,9 @@ Method:
 ## 5.4 Class LED
 
 Displays a Boolean state. Can display other information by varying the color.
+```python
+from micropython_ra8875.widgets.led import LED
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -567,6 +568,9 @@ Methods:
 ## 5.5 Class Meter
 
 This displays a single value in range 0.0 to 1.0 on a vertical linear meter.
+```python
+from micropython_ra8875.widgets.meter import Meter
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -613,6 +617,9 @@ followed by a `Pointer` instance for each vector to be displayed on it. The
 
 By contrast with the `Dial` class the pointers have lengths and colors which
 can vary dynamically.
+```python
+from micropython_ra8875.widgets.vectors import Pointer, VectorDial
+```
 
 ### Class VectorDial
 
@@ -657,6 +664,9 @@ These emulate linear potentiometers. Vertical `Slider` and horizontal
 `HorizSlider` variants are available. These are constructed and used
 similarly. The short forms (v) or (h) are used below to identify these
 variants. See the note above on callbacks.
+```python
+from micropython_ra8875.widgets.sliders import Slider, HorizSlider
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -709,6 +719,9 @@ processed, enabling dynamic color change. See `demos/hst.py`.
 
 This emulates a rotary control capable of being rotated through a predefined
 arc.
+```python
+from micropython_ra8875.widgets.knob import Knob
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -747,6 +760,9 @@ Methods:
 
 This provides for Boolean data entry and display. In the `True` state the
 control can show an 'X' or a filled block of any color.
+```python
+from micropython_ra8875.widgets.checkbox import Checkbox
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -780,6 +796,10 @@ Methods:
 This emulates a pushbutton, with a callback being executed each time the button
 is pressed. Buttons may be any one of three shapes: `CIRCLE`, `RECTANGLE`
 or `CLIPPED_RECT`.
+
+```python
+from micropython_ra8875.widgets.buttons import Button
+```
 
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
@@ -833,6 +853,9 @@ Buttons in a `ButtonList` should not have callbacks. The `ButtonList` has
 its own user supplied callback which will run each time the object is pressed.
 However each button can have its own list of `args`. Callback arguments
 comprise the currently visible button followed by its arguments.
+```python
+from micropython_ra8875.widgets.buttons import ButtonList
+```
 
 Constructor argument:
  * `callback` The callback function. Default does nothing.
@@ -869,6 +892,9 @@ for t in table: # Buttons overlay each other at same location
 These comprise a set of buttons at different locations. When a button is
 pressed, it becomes highlighted and remains so until another button is pressed.
 A callback runs each time the current button is changed.
+```python
+from micropython_ra8875.widgets.buttons import RadioButtons
+```
 
 Constructor positional arguments:
  * `highlight` Color to use for the highlighted button. Mandatory.
@@ -910,7 +936,9 @@ for t in table:
 
 The height of a listbox is determined by the number of entries in it and the
 font in use. Scrolling is not supported.
-
+```python
+from micropython_ra8875.widgets.listbox import Listbox
+```
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
 
@@ -955,7 +983,9 @@ A dropdown list. The list, when active, is drawn below the control. The height
 of the control is determined by the height of the font in use. The height of
 the list is determined by the number of entries in it and the font in use.
 Scrolling is not supported.
-
+```python
+from micropython_ra8875.widgets.dropdown import Dropdown
+```
 Constructor mandatory positional argument:
  1. `location` 2-tuple defining position.
 
@@ -1000,7 +1030,10 @@ accepts all touch events until it is closed. Dialog boxes are created by
 instantiating an `Aperture` which is a `Screen` superclass. In effect this
 is a window, but a 'micro' implementation lacking chrome beyond a simple border
 and occupying a fixed location on the screen.
-
+```python
+from micropython_ra8875.ugui import Screen, Aperture
+from micropython_ra8875.widgets.dialog import DialogBox
+```
 In use the user program creates a class subclassed from `Aperture`. This is
 populated in the same way as per `Screen` subclasses. The class name can then
 be passed to `Screen.change` to invoke the dialog box. The GUI provides a
@@ -1017,6 +1050,9 @@ Given coordinates relative to the dialog box, it provides an absolute
 ## 7.1 Class Aperture
 
 Provides a window for objects in a modal dialog box.
+```python
+from micropython_ra8875.ugui import Screen, Aperture
+```
 
 Constructor mandatory positional args:  
  1. `location` 2-tuple defining the window position.
@@ -1055,6 +1091,9 @@ press will close the dialog. The caller can determine which button was pressed.
 The size of the buttons and the width of the dialog box are calculated from the
 strings assigned to the buttons. This ensures that buttons are evenly spaced
 and identically sized.
+```python
+from micropython_ra8875.widgets.dialog import DialogBox
+```
 
 Constructor mandatory positional args:
  1. `font` The font for buttons and label.
@@ -1078,11 +1117,18 @@ text of the button pressed or 'Close' in the case of the `close` button.
 
 # 8. Fonts
 
+Python fonts areimported with:
+```python
+from micropython_ra8875.fonts import font10, font14
+```
+It is possible to create your own Python font files from industry standard
+`ttf` an `otf` files. These may be frozen as bytecode achieving substantial RAM
+savings with fast random access to individual glyphs.
+
 Fixed and variable pitch fonts may be created using the `font_to_py.py` utility
 documented [here](https://github.com/peterhinch/micropython-font-to-py.git).
 The `-x` argument should be employed. The resultant Python file may be imported
-and the module passed to the constructor of GUI objects. Python font files may
-be frozen as bytecode to radically reduce RAM usage.
+and the module passed to the constructor of GUI objects.
 
 The RA8875 has an internal font. This is fixed pitch and has dimensions 16*8
 (rows*cols). It can be rendered at this size or scaled by factors of 2, 3 or 4.
@@ -1153,3 +1199,50 @@ Other references:
 [uasyncio libraries and notes](https://github.com/peterhinch/micropython-async)  
 
 ###### [Jump to Contents](./GUI.md#contents)
+
+# Appendix 1 Directory structure
+
+The GUI is structured as a Python package. One aim is to achieve a modular
+structure with the user importing only those modules which are required: this
+reduces the RAM requirement. The `ugui.py` file contains the commonest widgets,
+with more specialist ones in modules in the `support` directory.
+
+Core files:
+ 1. `ugui.py` The micro GUI library.
+ 2. `tft_local.py` Local hardware definition. This file should be edited to
+ match your hardware.
+
+Optional files:
+ 1. `plot.py` The plot module.
+
+Device driver in the `driver` subdirectory:
+ 1. `ra8875.py` The device diver.
+ 2. `cal.py` Touchscreen calibration utility.
+ 3. `ra8875_test.py` Driver test program. See [RA8875 driver](./DRIVER.md).
+
+Support files in the `support` subdirectory:
+ 1. `constants.py` Constants such as colors and shapes.
+ 2. `asyn.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
+ 3. `aswitch.py` Has a `Delay_ms` class for retriggerable delays. From above.
+ 4. `font10.py` Fonts used by the demo programs.
+ 5. `font14.py` Ditto. These are generated from the free font `FreeSans.ttf`.
+
+Fonts apart, these files are necessary for the GUI to run.
+
+Demo programs in the `demos` subdirectory:
+ 1. `vst.py` A test program for vertical linear sliders. Also demos an
+ asynchronous coroutine and linked sliders.
+ 2. `hst.py` Tests horizontal slider controls, meter and LED. Demos
+ asynchronous coroutine, linked sliders and dynamically changing object colors.
+ 3. `buttontest.py` Pushbuttons, radio buttons, highlighting buttons and
+ checkboxes. "Reset" buttons respond to short and long presses.
+ 4. `knobtest.py` Rotary controls, dropdown lists and listboxes. Shows the two
+ styles of "greying out" of disabled controls.
+ 5. `screentest.py` Screen changes: demonstrates refresh of a screen when an
+ overlaying screen quits.
+ 6. `dialog.py` Modal dialog boxes.
+ 7. `pt.py` Plot test.
+ 8. `ktif.py` A demo using internal and external fonts.
+ 9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
+ displays.
+ 10. `tbox.py` Demo of the `Textbox` control.

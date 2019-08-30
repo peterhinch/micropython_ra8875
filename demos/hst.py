@@ -1,35 +1,22 @@
 # hst.py Demo/test program for horizontal slider class for Pyboard RA8875 GUI
 
-# The MIT License (MIT)
-#
+# Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
 
 import urandom
 import uasyncio as asyncio
+from micropython_ra8875.ugui import Screen
 from micropython_ra8875.support.constants import *
-from micropython_ra8875.ugui import HorizSlider, Button, ButtonList, Dial, Label, Meter, LED, Screen
-from micropython_ra8875.tft_local import setup
 
-import micropython_ra8875.support.font10 as font10
-import micropython_ra8875.support.font14 as font14
+from micropython_ra8875.widgets.buttons import Button, ButtonList
+from micropython_ra8875.widgets.label import Label
+from micropython_ra8875.widgets.led import LED
+from micropython_ra8875.widgets.meter import Meter
+from micropython_ra8875.widgets.dial import Dial
+from micropython_ra8875.widgets.sliders import HorizSlider
+
+from micropython_ra8875.fonts import font10, font14
+from micropython_ra8875.tft_local import setup
 
 # STANDARD BUTTONS
 

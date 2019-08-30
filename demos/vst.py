@@ -1,35 +1,21 @@
 # vst.py Demo/test program for vertical slider class for Pyboard RA8875 GUI
 
-# The MIT License (MIT)
-#
+# Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
 
 import uasyncio as asyncio
 from math import pi
-from micropython_ra8875.support.constants import *
-from micropython_ra8875.ugui import Slider, Button, ButtonList, Dial, Label, Screen
-from micropython_ra8875.tft_local import setup
 
-import micropython_ra8875.support.font10 as font10
-import micropython_ra8875.support.font14 as font14
+from micropython_ra8875.ugui import Screen
+from micropython_ra8875.support.constants import *
+
+from micropython_ra8875.widgets.buttons import Button, ButtonList
+from micropython_ra8875.widgets.label import Label
+from micropython_ra8875.widgets.dial import Dial
+from micropython_ra8875.widgets.sliders import Slider
+
+from micropython_ra8875.fonts import font10, font14
+from micropython_ra8875.tft_local import setup
 
 def to_string(val):
     return '{:3.1f}ohms'.format(val * 10)

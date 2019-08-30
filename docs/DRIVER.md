@@ -80,11 +80,6 @@ Methods.
  16. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
  17. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
  `x2, y2`.
- 18. `pline` Args `origin, vec, color`. Draw a line using complex coordinates:
- `origin` and `vec` are complex with `vec` being relative to `origin`.
- 19. `arrow` Args `origin, vec, lc, color` As above, with the vector
- represented as an arrow. The scalar `lc` is the length of the chevrons in
- pixels.
 
 # 2. The RA8875 class
 

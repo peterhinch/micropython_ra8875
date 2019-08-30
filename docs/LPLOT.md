@@ -26,7 +26,11 @@ RA8875 GUI library: this should be installed, configured and tested before use.
 
  1. `plot.py` The plot library
  2. `pt.py` Test/demo program.
- 3. `ptg.py` Tests/demos using generators to populate curves.
+
+Typical usage:
+```
+from micropython_ra8875.support.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
+```
 
 # 2. Concepts
 
@@ -264,7 +268,7 @@ floats of this size.
 
 Each time a data set arrives the graph should be cleared, a data value should
 be added to each `TSequence` instance, and the display instance should be
-refreshed. The following example is taken from demo `lptg.py`.
+refreshed. The following example is taken from demo `pt.py`.
 
 ```python
 class Tseq(Screen):
@@ -292,4 +296,9 @@ class Tseq(Screen):
 ```
 
 The cancellation logic enables the plot screen to be cleanly terminated by a
-`Button` object. It relies on `asyn.py` from [this repo](https://github.com/peterhinch/micropython-async).
+`Button` object. It relies on `asyn.py` from [this repo](https://github.com/peterhinch/micropython-async)
+to work round a bug in `uasyncio` V2.0 which is the official version.
+
+Alternatively the `fast_io` fork of uasyncio may be used which fixes the bug.
+It allows tasks to be cancelled quickly without the need for the `asyn` 
+workround. See [this repo](https://github.com/peterhinch/micropython-async.git).
