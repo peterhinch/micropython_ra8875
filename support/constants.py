@@ -47,3 +47,8 @@ IFONT16 = IFont(0)
 IFONT32 = IFont(1)
 IFONT48 = IFont(2)
 IFONT64 = IFont(3)
+# System defaults
+DEFAULT_FONT = IFont(0)
+SYS_BGCOLOR = (0, 0, 0)
+SYS_FGCOLOR = (255, 255, 255)
+

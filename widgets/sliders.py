@@ -3,7 +3,7 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Touchable, get_stringsize
+from micropython_ra8875.ugui import Touchable
 from micropython_ra8875.widgets.label import Label
 
 # Null function
@@ -163,7 +163,7 @@ class HorizSlider(Touchable):
             font = self.font
             bw = self.border
             for legend in self.legends:
-                offset = get_stringsize(legend, font)[0] / 2
+                offset = tft.get_stringsize(legend, font)[0] / 2
                 loc = int(xl - offset), y - font.height() - bw - 1
                 Label(loc, font = font, fontcolor = self.fontcolor, value = legend)
                 xl += dx

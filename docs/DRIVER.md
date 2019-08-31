@@ -6,10 +6,10 @@ required to support the touch GUI display. The `ra8875.py` driver provides an
 `RA8875` class. This is usable for applications other than the GUI and could
 readily be extended to support additional primitives provided by the chip.
 
-The GUI subclasses `RA8875` to provide a `TFT` class. This handles 'greying
-out' of disabled widgets by modifying the colors passed to the superclass
-methods, also methods for rendering strings and displaying vectors. For
-convenience `TFT` is documented here.
+The module `tft.py` subclasses `RA8875` to provide a `TFT` class. This provides
+a compatibility layer between the GUI and the driver. It handles 'greying out'
+of disabled widgets by modifying the colors passed to the superclass methods
+and methods for rendering strings. `TFT` is documented here.
 
 The RA8875 documentation is not the world's best and the chip has bugs. The
 driver was written by referring to a number of sources, notably the Adafruit
@@ -49,37 +49,42 @@ Constructor. This takes the following mandatory arguments.
  will be inoperative.
 
 Methods.
- 1. `get_fgcolor` Return system `fgcolor`.
- 2. `get_bgcolor` Return system `bgcolor`.
- 3. `text_style` Arg `style`. Accepts a text style, returns one with colors
+ 1. `text_style` Arg `style`. Accepts a text style, returns one with colors
  modified by the current greyed-out status.
- 4. `desaturate` Arg `value=None`. If a `bool` is passed, defines whether
+ 2. `desaturate` Arg `value=None`. If a `bool` is passed, defines whether
  greying-out is done by dimming (`False`) or desaturating (`True`) objects. By
  default the current status is returned.
- 5. `dim` Arg `factor=None` If a numeric value is passed, sets the amount of
+ 3. `dim` Arg `factor=None` If a numeric value is passed, sets the amount of
  dimming to be used if this option is selected. A typical value is 2, meaning
  that the brightness of colors is halved. Returns the current factor.
- 6. `usegrey` Arg `val`. Set current greyed-out status. If `True` is passed,
+ 4. `usegrey` Arg `val`. Set current greyed-out status. If `True` is passed,
  subsequent pixels will be rendered with the specified `color` modified to the
  current greyed-out style. If `False` is passed they will be rendered normally.
  Note that `desaturate` and `dim` methods set the grey style. They only affect
  rendering when the greyed-out status is set via `usegrey`.
- 7. `print_centered` Args `x, y, s, style`. Renders string `s` centred at
+ 5. `print_centered` Args `x, y, s, style`. Renders string `s` centred at
  `x, y`.
- 8 `print_left` Args `x, y, s, style, tab=32`. Renders string `s` starting at
+ 6 `print_left` Args `x, y, s, style, tab=32`. Renders string `s` starting at
  `x, y`. The `tab` value represents the size of a tab stop in pixels.
- 9. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
- 10. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
- 11. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
+ 7. `draw_rectangle` Args `x1, y1, x2, y2, color` Draw a rectangle.
+ 8. `fill_rectangle` Args `x1, y1, x2, y2, color` Draw a filled rectangle.
+ 9. `draw_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a clipped
  rectangle.
- 12. `fill_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a filled clipped
+ 10. `fill_clipped_rectangle` Args `x1, y1, x2, y2, color` Draw a filled clipped
  rectangle.
- 13. `draw_circle` Args `x, y, radius, color` Draw a circle.
- 14. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
- 15. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
- 16. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
- 17. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
+ 11. `draw_circle` Args `x, y, radius, color` Draw a circle.
+ 12. `fill_circle` Args `x, y, radius, color` Draw a filled circle.
+ 13. `draw_vline` Args `x, y, l, color` Draw a vertical line length `l`.
+ 14. `draw_hline` Args `x, y, l, color` Draw a horizontal line length `l`.
+ 15. `draw_line` Args `x1, y1, x2, y2, color` Draw a line from `x1, y1` to
  `x2, y2`.
+
+Static method:
+ 1. `get_stringsize` Args: `s, font`. Returns the metrics of a string `s` as a
+ 2-tuple comprising `(rows, cols)` in pixels.
+
+In methods 7-15 the passed `color` will be modified before rendering if the
+current status is greyed-out.
 
 # 2. The RA8875 class
 

@@ -3,15 +3,15 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import NoTouch, get_stringsize
-
+from micropython_ra8875.ugui import NoTouch
+from micropython_ra8875.driver.tft import TFT
 
 class Label(NoTouch):
     def __init__(self, location, *, font, border=None, width=None, fgcolor=None, bgcolor=None, fontcolor=None, value=None):
         if width is None:
             if value is None:
                 raise ValueError('If label value unspecified, must define the width')
-            width, _ = get_stringsize(value, font) 
+            width, _ = TFT.get_stringsize(value, font) 
         super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, value, None)
         self.height = self.font.height()
         self.height += 2 * self.border  # Height determined by font and border

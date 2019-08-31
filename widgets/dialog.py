@@ -3,7 +3,8 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Aperture, Screen, get_stringsize
+from micropython_ra8875.ugui import Aperture, Screen
+from micropython_ra8875.driver.tft import TFT
 from micropython_ra8875.support.constants import *
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.widgets.buttons import Button
@@ -13,12 +14,12 @@ class DialogBox(Aperture):
                  bgcolor=DARKGREEN, buttonwidth=25, closebutton=True):
         height = 150
         spacing = 20
-        buttonwidth = max(max([get_stringsize(x[0], font)[0] for x in elements]) + 4, buttonwidth)
-        buttonheight = max(get_stringsize('x', font)[1], 25)
+        buttonwidth = max(max([TFT.get_stringsize(x[0], font)[0] for x in elements]) + 4, buttonwidth)
+        buttonheight = max(TFT.get_stringsize('x', font)[1], 25)
         nelements = len(elements)
         width = spacing + (buttonwidth + spacing) * nelements
         if label is not None:
-            width = max(width, get_stringsize(label, font)[0] + 2 * spacing)
+            width = max(width, TFT.get_stringsize(label, font)[0] + 2 * spacing)
         super().__init__(location, height, width, bgcolor = bgcolor)
         x = self.location[0] + spacing # Coordinates relative to physical display
         gap = 0
@@ -33,7 +34,7 @@ class DialogBox(Aperture):
                 callback = self.back, args = (text,))
             x += buttonwidth + gap
         if closebutton:
-            x, y = get_stringsize('X', font)
+            x, y = TFT.get_stringsize('X', font)
             size = max(x, y, 25)
             Button((self.location[0] + width - (size + 1), self.location[1] + 1), height = size, width = size, font = font,
                 fgcolor = RED,  text = 'X', shape = RECTANGLE,

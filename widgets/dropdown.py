@@ -23,7 +23,7 @@ class _ListDialog(Aperture):
         tft = self.tft
         self.listbox = Listbox(lb_location, font = font, elements = elements, width = lb_width,
                                border = None, fgcolor = dd.fgcolor, bgcolor = dd.bgcolor,
-                               fontcolor = tft.fgcolor, select_color = dd.select_color,
+                               fontcolor = SYS_FGCOLOR, select_color = dd.select_color,
                                value = dd.value(), callback = self.callback)
         self.dropdown = dd
 

@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.16 Beta 30th Aug 2019.
+V0.17 Beta 31st Aug 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -1153,7 +1153,7 @@ To do this clone the
 [MicroPython repo](https://github.com/micropython/micropython.git) to your PC,
 and run the `mpy-cross/mpy-cross` program with `ugui.py` as an arg. Copy the
 resultant `ugui.mpy` to the target's `micropython_ra8875` directory and delete
-the directory's `ugui.py`.
+the directory's `ugui.py`. This may be extended to other files in the tree.
 
 On some targets this may still not save sufficient RAM: the `.mpy` file needs
 to be loaded into RAM in order to run. MicroPython supports a means of

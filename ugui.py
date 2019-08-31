@@ -1,143 +1,20 @@
-# ugui.py Micropython GUI library for RA8875 displays
+# ugui.py Micropython GUI library
 
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
 import uasyncio as asyncio
-import math
 import gc
 
 from micropython_ra8875.support.aswitch import Delay_ms
 from micropython_ra8875.support.asyn import Event
-from micropython_ra8875.driver.ra8875 import RA8875
 from micropython_ra8875.support.constants import *
 
-TWOPI = 2 * math.pi
 gc.collect()
 
 # Null function
 dolittle = lambda *_ : None
 
-def get_stringsize(s, font):
-    hor = 0
-    for c in s:
-        _, vert, cols = font.get_ch(c)
-        hor += cols
-    return hor, vert
-
-# *********** TFT CLASS ************
-# Subclass RA8875 to enable greying out of controls.
-
-
-class TFT(RA8875):
-    DEFAULT_FONT = IFONT16  # System font
-    def __init__(self, spi, pincs, pinrst, width, height, tdelay, loop):
-        super().__init__(spi, pincs, pinrst, width, height, loop)
-        self.tdelay = tdelay  # Touch mode
-        self._is_grey = False  # Not greyed-out
-        self.dim(2)  # Default grey-out: dim colors by factor of 2
-        self.desaturate(True)
-        self.fgcolor = WHITE
-        self.bgcolor = BLACK
-
-    def get_fgcolor(self):
-        return self.fgcolor
-
-    def get_bgcolor(self):
-        return self.bgcolor
-
-    # Return a text style (fgcolor, bgcolor, font) modified by tft grey status
-    # colors are (r, g, b)
-    def text_style(self, style):
-        if self._is_grey:
-            text_bgc = self._greyfunc(style[1], self._factor)
-        else:
-            text_bgc = style[1]
-        font = style[2]
-        if not font.hmap():
-            raise UguiException('Font must be horizontally mapped')
-        return (style[0], text_bgc, font)
-
-    # Style is (fgcolor, bgcolor, font)
-    # Rudimentary: prints a single line.
-    def print_left(self, x, y, s, style, tab=32):
-        if s == '':
-            return
-        fgc, bgc, font = self.text_style(style)
-        if isinstance(font, IFont):  # Internal font
-            self.draw_str(s, x, y, fgc, bgc, font.scale())
-        else:
-            for c in s:
-                if c == '\t':
-                    x += tab - x % tab
-                else:
-                    fmv, rows, cols = font.get_ch(c)
-                    self.draw_glyph(fmv, x, y, rows, cols, fgc, bgc)
-                    x += cols
-
-    def print_centered(self, x, y, s, style):
-        font = style[2]
-        length, height = get_stringsize(s, font)
-        self.print_left(max(x - length // 2, 0), max(y - height // 2, 0), s, style)
-
-    def _getcolor(self, color):
-        if self._is_grey:
-            color = self._greyfunc(color, self._factor)
-        return color
-
-    def desaturate(self, value=None):
-        if value is not None:  # Pass a bool to specify desat or dim
-            self._desaturate = value  # Save so it can be queried
-            def do_dim(color, factor): # Dim a color
-                if color is not None:
-                    return tuple(int(x / factor) for x in color)
-
-            def do_desat(color, factor): # Desaturate and dim
-                if color is not None:
-                    f = int(max(color) / factor)
-                    return (f, f, f)
-            # Specify the local function
-            self._greyfunc = do_desat if value else do_dim
-        return self._desaturate
-
-    def dim(self, factor=None):
-        if factor is not None:
-            if factor <= 1:
-                raise ValueError('Dim factor must be > 1')
-            self._factor = factor
-        return self._factor
-
-    def usegrey(self, val): # tft.usegrey(True) sets greyed-out
-        self._is_grey = val
-
-    def draw_rectangle(self, x1, y1, x2, y2, color):
-        super().draw_rectangle(x1, y1, x2, y2, self._getcolor(color))
-
-    def fill_rectangle(self, x1, y1, x2, y2, color):
-        super().fill_rectangle(x1, y1, x2, y2, self._getcolor(color))
-
-    def draw_clipped_rectangle(self, x1, y1, x2, y2, color):
-        super().draw_clipped_rectangle(x1, y1, x2, y2, self._getcolor(color))
-
-    def fill_clipped_rectangle(self, x1, y1, x2, y2, color):
-         super().fill_clipped_rectangle(x1, y1, x2, y2, self._getcolor(color))
-
-    def draw_circle(self, x, y, radius, color):
-        super().draw_circle(x, y, radius, self._getcolor(color))
-
-    def fill_circle(self, x, y, radius, color):
-        super().fill_circle(x, y, radius, self._getcolor(color))
-
-    def draw_vline(self, x, y, l, color):
-        super().draw_vline(x, y, l, self._getcolor(color))
-
-    def draw_hline(self, x, y, l, color):
-        super().draw_hline(x, y, l, self._getcolor(color))
-
-    def draw_line(self, x1, y1, x2, y2, color):
-        super().draw_line(x1, y1, x2, y2, self._getcolor(color))
-
-# *********** BASE CLASSES ***********
 
 class Screen:
     current_screen = None
@@ -218,9 +95,7 @@ class Screen:
 
     @classmethod
     def shutdown(cls):
-#        cls.tft.clr_scr()
-        tft = cls.tft
-        tft.fill_rectangle(0, 0, tft.width() -1, tft.height() -1, BLACK)
+        cls.tft.clr_scr()
         cls.is_shutdown.set()
 
     def __init__(self):
@@ -229,38 +104,10 @@ class Screen:
         self.modal = False
         if Screen.current_screen is None: # Initialising class and task
             loop = asyncio.get_event_loop()
-            loop.create_task(self._touchtest()) # One task only
+            loop.create_task(Screen.objtouch.touchtest()) # One task only
             loop.create_task(self._garbage_collect())
         Screen.current_screen = self
         self.parent = None
-
-
-    async def _touchtest(self): # Singleton task tests all touchable instances
-        td = Screen.tft.tdelay  # Delay in ms (0 is normal mode)
-        tp = Screen.objtouch  # touch panel instance
-        x = 0  # Current touch coords
-        y = 0
-        def dotouch():
-            for obj in Screen.current_screen.touchlist:
-                if obj.visible and not obj.greyed_out():
-                    obj._trytouch(x, y)
-        if td:
-            tdelay = Delay_ms(func = dotouch, duration = td)
-        while True:
-            await asyncio.sleep_ms(0)
-            if tp.ready():
-                x, y = tp.get_touch()
-                if td:
-                    if not tdelay():
-                        tdelay.trigger()
-                else:
-                    dotouch()  # Process immediately
-            elif not tp.touched():
-                for obj in Screen.current_screen.touchlist:
-                    if obj.was_touched:
-                        obj.was_touched = False # Call _untouched once only
-                        obj.busy = False
-                        obj._untouched()
 
     def _do_open(self, old_screen): # Aperture overrides
         show_all = True
@@ -269,7 +116,7 @@ class Screen:
         if old_screen.modal:
             show_all = False
             x0, y0, x1, y1 = old_screen._list_dims()
-            tft.fill_rectangle(x0, y0, x1, y1, tft.get_bgcolor()) # Blank to screen BG
+            tft.fill_rectangle(x0, y0, x1, y1, SYS_BGCOLOR) # Blank to screen BG
             for obj in [z for z in self.displaylist if z.overlaps(x0, y0, x1, y1)]:
                 if obj.visible:
                     obj.redraw = True # Redraw static content
@@ -277,8 +124,7 @@ class Screen:
                     obj.show()
 # Normally clear the screen and redraw everything
         else:
-#            tft.clr_scr()
-            tft.fill_rectangle(0, 0, tft.width() -1, tft.height() -1, BLACK)
+            tft.clr_scr()
             Screen.show()
 
     def on_open(self): # Optionally implemented in subclass
@@ -307,8 +153,8 @@ class Aperture(Screen):
         self.draw_border = draw_border
         self.modal = True
         tft = Screen._get_tft()
-        self.fgcolor = fgcolor if fgcolor is not None else tft.get_fgcolor()
-        self.bgcolor = bgcolor if bgcolor is not None else tft.get_bgcolor()
+        self.fgcolor = fgcolor if fgcolor is not None else SYS_FGCOLOR
+        self.bgcolor = bgcolor if bgcolor is not None else SYS_BGCOLOR
 
     def locn(self, x, y):
         return (self.location[0] + x, self.location[1] + y)
@@ -352,21 +198,21 @@ class NoTouch:
         self.visible = True # Used by ButtonList class for invisible buttons
         tft = Screen._get_tft(False) # Not greyed out
         if font is None:
-            self.font = TFT.DEFAULT_FONT
+            self.font = DEFAULT_FONT
         else:
             self.font = font
 
         if fgcolor is None:
-            self.fgcolor = tft.get_fgcolor()
+            self.fgcolor = SYS_FGCOLOR
             if bgcolor is None:
-                self.bgcolor = tft.get_bgcolor()
+                self.bgcolor = SYS_BGCOLOR
             else:
                 self.bgcolor = bgcolor
             self.fontbg = self.bgcolor
         else:
             self.fgcolor = fgcolor
             if bgcolor is None:
-                self.bgcolor = tft.get_bgcolor()  # black surround to circle button etc
+                self.bgcolor = SYS_BGCOLOR  # black surround to circle button etc
                 # Fonts are drawn on bg of foreground color e.g. for buttons
                 self.fontbg = fgcolor
             else:

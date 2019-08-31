@@ -4,6 +4,7 @@
 # Copyright (c) 2019 Peter Hinch
 
 from micropython_ra8875.ugui import Screen, NoTouch
+from micropython_ra8875.support.constants import *
 import cmath
 
 conj = lambda v : v.real - v.imag * 1j  # Complex conjugate
@@ -39,7 +40,7 @@ class Pointer:
     def __init__(self, dial):
         dial.vectors.add(self)
         self.dial = dial
-        self.color = dial.tft.fgcolor
+        self.color = SYS_FGCOLOR
         self.val = 0j
 
     def value(self, v=None, color=None):
@@ -68,13 +69,13 @@ class Pointer:
             if newval is None:  # Refresh
                 arrow(tft, vor, r * self.val, 5, color)
             else:
-                arrow(tft, vor, r * self.val, 5, tft.bgcolor)
+                arrow(tft, vor, r * self.val, 5, dial.bgcolor)
                 arrow(tft, vor, r * newval, 5, color)
         else:
             if newval is None:  # Refresh
                 pline(tft, vor, r * self.val, color)
             else:
-                pline(tft, vor, r * self.val, tft.bgcolor)  # Erase old
+                pline(tft, vor, r * self.val, dial.bgcolor)  # Erase old
                 pline(tft, vor, r * newval, color)
 
 
