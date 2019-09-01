@@ -1,6 +1,6 @@
 # RA8875 GUI
 
-V0.17 Beta 31st Aug 2019.
+V0.18 Beta 1st September 2019.
 
 Provides a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -188,25 +188,34 @@ import micropython_ra8875.demos.vst
 
 This illustrates the "hello world" of the GUI:
 ```python
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
 from micropython_ra8875.widgets.buttons import Button
 from micropython_ra8875.fonts import font10
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
-def quitbutton():
+def quitbutton():  # Define objects which may exist on multiple screens
     def quit(button):
         Screen.shutdown()
     Button((109, 107), font = font10, callback = quit, fgcolor = RED,
            text = 'Quit', shape = RECTANGLE)
 
-class BaseScreen(Screen):
+class BaseScreen(Screen):  # Define a user screen
     def __init__(self):
         super().__init__()
         quitbutton()
-setup()
-Screen.change(BaseScreen)
+setup()  # Initialise the hardware
+Screen.change(BaseScreen)  # Start the user screen
 ```
+
+## 1.5 Directory structure
+
+ 1. `py` Python files supporting the GUI.
+ 2. `driver` Device driver and hardware dependent files.
+ 3. `widgets` Python files providing individual widgets.
+ 4. `fonts` Python font files.
+ 5. `demos` Demo/test scripts.
+ 6. `docs` Documents and images.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -286,11 +295,11 @@ The `Screen` class is configured in `tft_local.py`.
 
 The following illustrates the structure of a minimal program:
 ```python
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
 from micropython_ra8875.widgets.buttons import Button
 from micropython_ra8875.fonts import font10
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 def quitbutton():
     def quit(button):
@@ -335,12 +344,12 @@ in the constructor. This arrangement facilitates communication between objects
 on the screen. The following presents an outline of this approach:
 
 ```python
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
 from micropython_ra8875.widgets.buttons import Button
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.fonts import font10
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 def backbutton(x, y):
     def back(button):  # A callback defined locally
@@ -459,7 +468,7 @@ by calling a method or by touching the control.
 Works with fixed and variable pitch fonts. Tab characters are supported for
 Python fonts (not for the RA8875 internal font).
 ```python
-from micropython_ra8875.ugui.widgets.textbox import Textbox
+from micropython_ra8875.py.ugui.widgets.textbox import Textbox
 ```
 
 Constructor mandatory positional arguments:
@@ -1031,7 +1040,7 @@ instantiating an `Aperture` which is a `Screen` superclass. In effect this
 is a window, but a 'micro' implementation lacking chrome beyond a simple border
 and occupying a fixed location on the screen.
 ```python
-from micropython_ra8875.ugui import Screen, Aperture
+from micropython_ra8875.py.ugui import Screen, Aperture
 from micropython_ra8875.widgets.dialog import DialogBox
 ```
 In use the user program creates a class subclassed from `Aperture`. This is
@@ -1051,7 +1060,7 @@ Given coordinates relative to the dialog box, it provides an absolute
 
 Provides a window for objects in a modal dialog box.
 ```python
-from micropython_ra8875.ugui import Screen, Aperture
+from micropython_ra8875.py.ugui import Screen, Aperture
 ```
 
 Constructor mandatory positional args:  

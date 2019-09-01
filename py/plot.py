@@ -8,8 +8,8 @@ from cmath import rect
 from micropython import const
 from array import array
 
-from micropython_ra8875.ugui import NoTouch, Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import NoTouch, Screen
+from micropython_ra8875.py.colors import *
 
 type_gen = type((lambda: (yield))())  # type of a generator
 

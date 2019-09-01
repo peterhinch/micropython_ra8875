@@ -10,8 +10,9 @@
 
 import uasyncio as asyncio
 from micropython_ra8875.driver.ra8875 import RA8875
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
+from micropython_ra8875.driver.constants import *
 
 
 class TFT(RA8875):

@@ -3,7 +3,7 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Touchable
+from micropython_ra8875.py.ugui import Touchable
 
 class Textbox(Touchable):
     def __init__(self, location, width, nlines, font, *, border=2, fgcolor=None,

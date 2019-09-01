@@ -6,8 +6,8 @@
 import uasyncio as asyncio
 import uos as os
 import sys
-from micropython_ra8875.support.constants import *  # Colors
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.py.colors import *  # Colors
+from micropython_ra8875.driver.tft_local import setup
 
 tft = setup(True, True)
 
@@ -49,13 +49,12 @@ try:
     loop.run_until_complete(do_touch(tft))
 except KeyboardInterrupt:
     loop.close()
-
-if not input('Keep these calibration values (y/n)? ').lower() == 'y':
+if not data[2] or not input('Keep these calibration values (y/n)? ').lower() == 'y':
     print('No changes made. Quitting.')
     sys.exit(0)
 
-source = 'micropython_ra8875/tft_local.py'
-temp = 'micropython_ra8875/tft_local.bak'
+source = 'micropython_ra8875/driver/tft_local.py'
+temp = 'micropython_ra8875/driver/tft_local.bak'
 try:
     with open(source, 'r') as fr, open(temp, 'w') as fw:
         for line in fr:

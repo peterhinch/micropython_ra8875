@@ -3,15 +3,15 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
 
 from micropython_ra8875.widgets.buttons import Button, ButtonList, RadioButtons
 from micropython_ra8875.widgets.checkbox import Checkbox
 from micropython_ra8875.widgets.label import Label
 
 from micropython_ra8875.fonts import font10, font14
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 class ButtonScreen(Screen):
     def __init__(self):
@@ -59,17 +59,19 @@ class ButtonScreen(Screen):
         for n in range(5):
             self.lstlbl.append(Label((390, 40 * n), **labels))
 
+        self.lst_en_dis = []  # Controls affected by disable button.
 # Button assortment
         x = 0
         for t in table:
-            Button((x, 0), font = font14, shape = CIRCLE, callback = self.callback, **t)
+            self.lst_en_dis.append(Button((x, 0), font = font14, shape = CIRCLE,
+                                          callback = self.callback, **t))
             x += 70
 
 # Highlighting buttons
         x = 0
         for t in table_highlight:
-            Button((x, 60), fgcolor = GREY, fontcolor = BLACK, litcolor = WHITE,
-                font = font14, callback = self.callback, **t)
+            self.lst_en_dis.append(Button((x, 60), fgcolor = CYAN, shape = CIRCLE, fontcolor = BLACK,
+                   litcolor = WHITE, font = font14, callback = self.callback, **t))
             x += 70
 
 # Start/Stop toggle
@@ -79,6 +81,7 @@ class ButtonScreen(Screen):
             button = self.bs.add_button((0, 240), font = font14, fontcolor = BLACK, height = 30, **t)
             if self.bs0 is None: # Save for reset button callback
                 self.bs0 = button
+        self.lst_en_dis.append(self.bs)
 
 # Radio buttons
         x = 0
@@ -90,11 +93,11 @@ class ButtonScreen(Screen):
             if self.rb0 is None: # Save for reset button callback
                 self.rb0 = button
             x += 60
-
+        self.lst_en_dis.append(self.rb)
 # Checkbox
         self.cb1 = Checkbox((340, 0), callback = self.cbcb, args = (0,))
         self.cb2 = Checkbox((340, 40), fillcolor = RED, callback = self.cbcb, args = (1,))
-
+        self.lst_en_dis.extend([self.cb1, self.cb2])
 # Reset button
         self.lbl_reset = Label((200, 220), font = font10, value = 'Reset also responds to long press')
         self.btn_reset = Button((300, 240), font = font14, height = 30, width = 80,
@@ -107,7 +110,6 @@ class ButtonScreen(Screen):
                                callback = self.quit)
 # Enable/Disable toggle 
         self.bs_en = ButtonList(self.cb_en_dis)
-        self.tup_en_dis = (self.cb1, self.cb2, self.rb, self.bs) # Items affected by enable/disable button
         self.bs_en.add_button((200, 240), font = font14, fontcolor = BLACK, height = 30, width = 90,
                               fgcolor = GREEN, shape = RECTANGLE, text = 'Disable', args = (True,))
         self.bs_en.add_button((200, 240), font = font14, fontcolor = BLACK, height = 30, width = 90,
@@ -133,7 +135,7 @@ class ButtonScreen(Screen):
         self.lstlbl[idx_label].value('Short')
 
     def cb_en_dis(self, button, disable):
-        for item in self.tup_en_dis:
+        for item in self.lst_en_dis:
             item.greyed_out(disable)
 
 def test():

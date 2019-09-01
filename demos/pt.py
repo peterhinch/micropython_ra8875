@@ -27,15 +27,15 @@ import uasyncio as asyncio
 from math import sin, cos, pi
 from cmath import rect
 
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
-import micropython_ra8875.support.asyn as asyn
-from micropython_ra8875.support.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
+import micropython_ra8875.py.asyn as asyn
+from micropython_ra8875.py.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
 
 from micropython_ra8875.widgets.buttons import Button
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.fonts import font10
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 # STANDARD BUTTONS
 

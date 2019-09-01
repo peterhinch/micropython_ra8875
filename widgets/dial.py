@@ -5,7 +5,7 @@
 # Copyright (c) 2019 Peter Hinch
 
 import math
-from micropython_ra8875.ugui import NoTouch
+from micropython_ra8875.py.ugui import NoTouch
 
 # class displays angles. Angle 0 is vertical, +ve increments are clockwise.
 class Dial(NoTouch):

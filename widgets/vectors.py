@@ -3,8 +3,8 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Screen, NoTouch
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen, NoTouch
+from micropython_ra8875.driver.constants import *
 import cmath
 
 conj = lambda v : v.real - v.imag * 1j  # Complex conjugate

@@ -4,9 +4,9 @@
 # Copyright (c) 2019 Peter Hinch
 
 import uasyncio as asyncio
-from micropython_ra8875.ugui import Touchable
-from micropython_ra8875.support.aswitch import Delay_ms
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Touchable
+from micropython_ra8875.py.asynch import Delay_ms
+from micropython_ra8875.py.colors import *
 
 dolittle = lambda *_ : None
 

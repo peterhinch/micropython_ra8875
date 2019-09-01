@@ -6,9 +6,9 @@
 import uasyncio as asyncio
 import gc
 
-from micropython_ra8875.support.aswitch import Delay_ms
-from micropython_ra8875.support.asyn import Event
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.asynch import Delay_ms, Event
+from micropython_ra8875.py.colors import *
+from micropython_ra8875.driver.constants import *
 
 gc.collect()
 

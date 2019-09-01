@@ -8,15 +8,15 @@ import time
 from cmath import rect, pi
 import uasyncio as asyncio
 
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
 
 from micropython_ra8875.widgets.buttons import Button, ButtonList
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.widgets.vectors import Pointer, VectorDial
 
 from micropython_ra8875.fonts import font10, font14
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 def quitbutton(x=399, y=242):
     def quit(button):

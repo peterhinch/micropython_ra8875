@@ -3,9 +3,9 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Aperture, Screen
+from micropython_ra8875.py.ugui import Aperture, Screen
 from micropython_ra8875.driver.tft import TFT
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.colors import *
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.widgets.buttons import Button
 

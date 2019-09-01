@@ -4,15 +4,16 @@
 # Copyright (c) 2019 Peter Hinch
 
 import uasyncio as asyncio
-from micropython_ra8875.ugui import Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Screen
+from micropython_ra8875.py.colors import *
+from micropython_ra8875.driver.constants import *
 
 from micropython_ra8875.widgets.buttons import Button
 from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.widgets.textbox import Textbox
 
 from micropython_ra8875.fonts import font10, font14
-from micropython_ra8875.tft_local import setup
+from micropython_ra8875.driver.tft_local import setup
 
 # **** STANDARD BUTTON TYPES ****
 

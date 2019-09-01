@@ -3,8 +3,9 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
-from micropython_ra8875.ugui import Touchable, Aperture, Screen
-from micropython_ra8875.support.constants import *
+from micropython_ra8875.py.ugui import Touchable, Aperture, Screen
+from micropython_ra8875.py.colors import *
+from micropython_ra8875.driver.constants import *
 from micropython_ra8875.widgets.listbox import Listbox
 
 dolittle = lambda *_ : None

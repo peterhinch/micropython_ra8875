@@ -33,7 +33,7 @@ def setup(driver_test=False, use_async=True):
         loop = asyncio.get_event_loop() if use_async else None
         return RA8875(spi, pincs, pinrst, _WIDTH, _HEIGHT, loop)
 
-    from micropython_ra8875.ugui import Screen
+    from micropython_ra8875.py.ugui import Screen
     from micropython_ra8875.driver.tft import TFT
     loop = asyncio.get_event_loop()
     tft = TFT(spi, pincs, pinrst, _WIDTH, _HEIGHT, _TOUCH_DELAY, loop)

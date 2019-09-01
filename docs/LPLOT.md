@@ -29,7 +29,7 @@ RA8875 GUI library: this should be installed, configured and tested before use.
 
 Typical usage:
 ```
-from micropython_ra8875.support.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
+from micropython_ra8875.py.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
 ```
 
 # 2. Concepts

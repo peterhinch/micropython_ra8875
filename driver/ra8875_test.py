@@ -4,9 +4,9 @@
 # Copyright (c) 2019 Peter Hinch
 
 from utime import sleep_ms, ticks_us, ticks_diff
-import micropython_ra8875.support.font10 as font10
-from micropython_ra8875.support.constants import *  # Colors
-from micropython_ra8875.tft_local import setup
+import micropython_ra8875.fonts.font10 as font10
+from micropython_ra8875.py.colors import *  # Colors
+from micropython_ra8875.driver.tft_local import setup
 
 tft = setup(True, False)  # No aysncio
 
