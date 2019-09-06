@@ -20,7 +20,7 @@ class ButtonScreen(Screen):
         table = [
             {'fgcolor' : GREEN, 'text' : 'Yes', 'args' : ('Oui', 2), 'fontcolor' : (0, 0, 0)},
             {'fgcolor' : RED, 'text' : 'No', 'args' : ('Non', 2)},
-            {'fgcolor' : BLUE, 'text' : '???', 'args' : ('Que?', 2), 'fill': False},
+            {'fgcolor' : BLUE, 'text' : '???', 'args' : ('Que?', 2)},  # 'fill': False to see effect
             {'fgcolor' : GREY, 'text' : 'Rats', 'args' : ('Rats', 2)},
         ]
 # Highlight buttons: only tabulate data that varies

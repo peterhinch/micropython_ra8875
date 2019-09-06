@@ -38,6 +38,7 @@ without increasing the RAM usage of existing applications.
   1.2 [Calibration](./GUI.md#12-calibration)  
   1.3 [Demo scripts](./GUI.md#13-demo-scripts)  
   1.4 [A minimal code example](./GUI.md#14-a-minimal-code-example)  
+  1.5 [Directory structure](./GUI.md#15-directory-structure)  
 2. [Concepts](./GUI.md#2-concepts)  
   2.1 [Terminology](./GUI.md#21-terminology)  
   2.2 [Coordinates](./GUI.md#22-coordinates)  
@@ -233,7 +234,7 @@ can respond to touch (e.g. `Pushbutton` instances) while the latter cannot
 
 ## 2.2 Coordinates
 
-In common with most displays, the top left hand corner of the display is (0, 0)
+As per graphics conventions the top left hand corner of the display is (0, 0)
 with increasing values of x to the right, and increasing values of y downward.
 Display objects exist within a rectangular bounding box; in the case of touch
 sensitive controls this corresponds to the sensitive region. Locations are
@@ -253,8 +254,8 @@ be executed when a given event occurs. A callback function receives positional
 arguments. The first is a reference to the object raising the callback.
 Subsequent arguments are user defined, and are specified as a tuple or list of
 items. Callbacks are optional, as are the argument lists - a default null
-function and empty list are provided. Callbacks are typically written as bound
-methods - see the Screens section for a reason why this is useful.
+function and empty list are provided. Callbacks may optionally be written as
+bound methods - see Screens below for a reason why this can be useful.
 
 When writing callbacks take care to ensure that the number of arguments passed
 is correct, bearing in mind the first arg listed above. Failure to do this will
@@ -311,6 +312,7 @@ class BaseScreen(Screen):
     def __init__(self):
         super().__init__()
         quitbutton()
+# uasyncio.get_event_loop(runq_len=30)
 setup()
 Screen.change(BaseScreen)
 ```
@@ -325,9 +327,9 @@ this should be done before calling `setup`.
 
 ## 3.1 Initialisation
 
-This is performed by `tft_local.py` which instantiates a `TFT` display. The
-`TFT` class is derived from the driver's `RA8875` class. These are documented
-[here](./DRIVER.md).
+This is performed by `driver/tft_local.py` which instantiates a `TFT` display.
+The `TFT` class is derived from the driver's `RA8875` class. These are
+documented [here](./DRIVER.md).
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -1188,7 +1190,7 @@ or more detections with slightly different coordinates. On some widgets this
 results in flicker as the control updates multiple times. The GUI does not use
 double-click events: any attempt to detect these would be suspect.
 
-The `tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
+The `driver/tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
 delay in ms, normally 0. A higher value (say 200) mitigates flicker at the cost
 of slowing the response to touches.
 
@@ -1214,29 +1216,44 @@ Other references:
 The GUI is structured as a Python package. One aim is to achieve a modular
 structure with the user importing only those modules which are required: this
 reduces the RAM requirement. The `ugui.py` file contains the commonest widgets,
-with more specialist ones in modules in the `support` directory.
+with more specialist ones in modules in the `support` directory. A further aim
+is to separate hardware dependent modules: this should aid porting the GUI to
+other device drivers.
 
-Core files:
- 1. `ugui.py` The micro GUI library.
+Hardware dependent files in the `driver` subdirectory:
+ 1. `ra8875.py` The device diver.
  2. `tft_local.py` Local hardware definition. This file should be edited to
  match your hardware.
+ 3. `tft.py` Compatibility layer between GUI and device driver.
+ 4 `constants.py` Hardware dependent constants such as internal fonts.
+ 5. `cal.py` Touchscreen calibration utility.
+ 6. `ra8875_test.py` Driver test program. See [RA8875 driver](./DRIVER.md).
 
-Optional files:
- 1. `plot.py` The plot module.
+GUI files in the `py` subdirectory:
+ 1. `ugui.py` The micro GUI library.
+ 2. `colors.py` Constants such as colors and shapes.
+ 3. `asynch.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
+ 4. `asyn.py` Further primitives used by plot module.
+ 5. `plot.py` The plot module.
 
-Device driver in the `driver` subdirectory:
- 1. `ra8875.py` The device diver.
- 2. `cal.py` Touchscreen calibration utility.
- 3. `ra8875_test.py` Driver test program. See [RA8875 driver](./DRIVER.md).
+Widgets in the `widgets` directory:
+ 1. `buttons.py` Various types of pushbutton.
+ 2. `checkbox.py`
+ 3. `dialog.py`
+ 4. `dial.py` Rotary meter display class.
+ 5. `dropdown.py`
+ 6. `knob.py` Knob "potentiometer" control class.
+ 7. `label.py`
+ 8. `led.py`
+ 9. `listbox.py`
+ 10. `meter.py` Linear meter display class.
+ 11. `sliders.py`
+ 12. `textbox.py`
+ 13. `vectors.py` Vector display class.
 
-Support files in the `support` subdirectory:
- 1. `constants.py` Constants such as colors and shapes.
- 2. `asyn.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
- 3. `aswitch.py` Has a `Delay_ms` class for retriggerable delays. From above.
- 4. `font10.py` Fonts used by the demo programs.
- 5. `font14.py` Ditto. These are generated from the free font `FreeSans.ttf`.
-
-Fonts apart, these files are necessary for the GUI to run.
+Python font files in the `fonts` directory used by the demo programs:
+ 1. `font10.py` Both generated from the free font `FreeSans.ttf`.
+ 2. `font14.py`
 
 Demo programs in the `demos` subdirectory:
  1. `vst.py` A test program for vertical linear sliders. Also demos an
@@ -1255,3 +1272,5 @@ Demo programs in the `demos` subdirectory:
  9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
+
+Documentation in `docs`.
