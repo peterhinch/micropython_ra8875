@@ -18,13 +18,13 @@ from micropython_ra8875.fonts import font10, font14
 from micropython_ra8875.driver.tft_local import setup
 
 def to_string(val):
-    return '{:3.1f}Ω'.format(val * 10)
+    return '{:3.1f}ohms'.format(val * 10)
 
 class VerticalSliderScreen(Screen):
     def __init__(self):
         super().__init__()
 # Common args for the labels
-        labels = { 'width' : 60,
+        labels = { 'width' : 75,
                 'fontcolor' : WHITE,
                 'border' : 2,
                 'fgcolor' : RED,
