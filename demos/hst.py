@@ -26,12 +26,12 @@ def quitbutton():
     Button((390, 240), font = font14, callback = quit, fgcolor = RED, text = 'Quit', width=80, height=30)
 
 def to_string(val):
-    return '{:3.1f}ohms'.format(val * 10)
+    return '{:3.1f}Ω'.format(val * 10)
 
 class SliderScreen(Screen):
     def __init__(self):
         super().__init__()
-        labels = { 'width' : 75,
+        labels = { 'width' : 60,
                 'fontcolor' : WHITE,
                 'border' : 2,
                 'fgcolor' : RED,

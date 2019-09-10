@@ -40,7 +40,7 @@ class TFT(RA8875):
             text_bgc = style[1]
         font = style[2]
         if not font.hmap():
-            raise UguiException('Font must be horizontally mapped')
+            raise RuntimeError('Font must be horizontally mapped')
         return (style[0], text_bgc, font)
 
     # Style is (fgcolor, bgcolor, font)
