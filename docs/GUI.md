@@ -2,11 +2,16 @@
 
 V0.18 Beta 1st September 2019.
 
-Provides a simple event driven touch GUI interface for MicroPython targets used
+This is a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
-been tested with Pyboard 1.1 and with Pyboard D series with a 4.3 inch Adafruit
-display. It is designed also to work with the 7 inch display but to date this
-has not been tested.
+been tested with Pyboard 1.1 and with Pyboard D series and has been tested with
+the following Adafruit TFT displays:
+ 1. [4.3 inch 480x270](https://www.adafruit.com/product/1591)  
+ 2. [5 inch 800x480](https://www.adafruit.com/product/1596)  
+
+It should work with the [7 inch 800x480](https://www.adafruit.com/product/2354)
+display as the Adafruit driver makes no distinction between the 5 and 7 inch
+variants.
 
 It should work with most targets supporting the Viper code generator. Currently
 this excludes ESP32. RAM limitations mean it is unlikely to work on ESP8266.
@@ -103,9 +108,9 @@ as follows:
 | Y8      | MOSI    |
 
 Pins are arbitrary and may be redefined e.g. for non-pyboard targets. The
-`tft_local.py` file must be amended to suit as described below. Use of software
-SPI may incur a performance penalty. The Adafruit adaptor must be powered from
-a voltage in the range 3-5V nominal.
+`driver/tft_local.py` file must be amended to suit as described below. Use of
+software SPI may incur a performance penalty. The Adafruit adaptor must be
+powered from a voltage in the range 3-5V nominal.
 
 Note from the Adafruit documentation: "The RA8875 does not tri-state the MISO
 pin, it should not share that pin with any other SPI device (including an SD
@@ -139,14 +144,16 @@ This is done by issuing:
 >>> import micropython_ra8875.driver.cal
 ```
 The top left and bottom right corners of the visible screen should be
-identified by yellow lines. If this does not occur, check your `tft_local.py`
-file for the correct pin numbers and display size; check your wiring.
+identified by yellow lines. If this does not occur, check your
+`driver/tft_local.py` file for the correct pin numbers and display size; check
+your wiring.
 
 Using a stylus for accuracy, touch the intersection of the top left lines.
 Repeat for the bottom right corner. The REPL will show the coordinates read by
 the device. The last values read for each corner will be retained. Quit the
 program with `ctrl-c`: it will ask if you want to keep these readings. If you
-confirm the data will be stored on the target (in the file `tft_local.py`).
+confirm, the data will be stored on the target (in the file
+`driver/tft_local.py`).
 
 It is suggested that you then run one or more of the demos. Hit `ctrl-d` to
 reset the board and issue (for example):
