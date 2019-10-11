@@ -27,8 +27,9 @@ The GUI uses `uasyncio` for scheduling and has been tested on Pyboard V1.1 and
 on Pyboard D. Supported hardware from Adafruit:
 
 [Controller board](https://www.adafruit.com/product/1590)  
-[4.3 inch display](https://www.adafruit.com/product/1591)  
-[7 inch display](https://www.adafruit.com/product/2354)
+[4.3 inch 480x272 TFT display](https://www.adafruit.com/product/1591)  
+[5 inch 800x480 TFT](https://www.adafruit.com/product/1596)  
+[7 inch 800x480 TFT](https://www.adafruit.com/product/2354)
 
 Non-Adafruit display hardware may or may not work: the detailed hardware
 specifications for displays may vary, requiring corresponding changes to the
