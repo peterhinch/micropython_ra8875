@@ -103,7 +103,7 @@ class Textbox(Touchable):
             self.show_if_current()
 
     def _touched(self, x, y): # Was touched
-        self.scroll(-1 if  2 * y < self.height else 1)
+        self.scroll(-1 if  2 * (y - self.location[1]) < self.height else 1)
 
     def value(self):
         return len(self.lines)

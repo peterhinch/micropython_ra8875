@@ -150,7 +150,8 @@ clipping and wrapping in action. "Fast" screen
 shows fast updates using internal font. "Tab"
 screen shows use of tab characters with Python
 font.
-Text boxes may be scrolled by touching them.''')
+Text boxes may be scrolled by touching them near
+the top or bottom.''')
 # Instantiate loop before calling setup if you need to change queue sizes
 loop = asyncio.get_event_loop()
 setup()

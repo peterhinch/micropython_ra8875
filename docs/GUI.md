@@ -75,7 +75,8 @@ without increasing the RAM usage of existing applications.
 8. [Fonts](./GUI.md#8-fonts)  
 9. [Memory issues](./GUI.md#9-memory-issues)  
 10. [RA8875 issues](./GUI.md#10-ra8875-issues)  
-11. [References](./GUI.md#11-references)  
+11. [Troubleshooting](./GUI.md#11-troubleshooting)
+12. [References](./GUI.md#12-references)  
 
 # 1. Getting started
 
@@ -170,11 +171,12 @@ target has too little RAM to compile `ugui.py`. See
 
 ## 1.3 Demo scripts
 
-These are run at the REPL by issuing a `ctrl-d` soft reset, then importing them
-e.g.
+Except where stated these will run on 480x270 or 800x480 displays. They are run
+at the REPL by issuing a `ctrl-d` soft reset, then importing them e.g.
 ```python
 import micropython_ra8875.demos.vst
 ```
+Demos for 480x272 displays (will run on 800x480).  
  1. `vst.py` A test program for vertical linear sliders. Also demos an
  asynchronous coroutine and linked sliders.
  2. `hst.py` Tests horizontal slider controls, meter and LED. Demos
@@ -191,6 +193,9 @@ import micropython_ra8875.demos.vst
  9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
+Demos for 800x480 displays only.
+ 1. `audio.py` A control panel for a HiFi system with simulated audio.
+ 2. `kbd.py` A qwerty keyboard feeding a textbox.
 
 ## 1.4 A minimal code example
 
@@ -1204,7 +1209,20 @@ of slowing the response to touches.
 Other issues are detailed in [the driver document](./DRIVER.md). These do not
 affect GUI operation.
 
-# 11. References
+# 11. Troubleshooting
+
+Common issues:  
+ 1. Display corruption. Caused by part of a widget straying beyond the limits
+ of the display. Check widget placement.
+ 2. Tracebacks pointing to ugui.py. Usually results from a callback getting
+ an incorrect number of arguments. Most callbacks receive the widget as an
+ extra argument before any user specified args.
+ 3. Crash when display is initialised. This points to a power problem. The TFT
+ draws power when started which can cause a voltage drop. Solution is to use a
+ more capable power source. If powering by USB use shorter cables with a lower
+ resistance.
+
+# 12. References
 
 Documentation for the underlying libraries may be found at these sites.  
 

@@ -66,14 +66,14 @@ class Meter(NoTouch):
                     Label(loc, font = font, fontcolor = self.fontcolor, value = legend)
                     yl -= dy
 
-        ptr_y = int(y1 - self._value * height) # y position of top of bar
+        ptr_y = round(y1 - self._value * (height - 1))  # y position of top of bar
         if self.ptr_y is None:
             tft.fill_rectangle(x0 + tl, y0 + 1, x1 - tl, y1 - 1, self.bgcolor)
             self.ptr_y = y1
         if ptr_y < self.ptr_y:  # Bar has moved up
             tft.fill_rectangle(x0 + tl, ptr_y, x1 - tl, self.ptr_y, self.barcolor)
         elif ptr_y > self.ptr_y:  # Moved down, blank the area
-            tft.fill_rectangle(x0 + tl, self.ptr_y, x1 - tl, ptr_y, self.bgcolor)
+            tft.fill_rectangle(x0 + tl, ptr_y, x1 - tl, self.ptr_y, self.bgcolor)
         self.ptr_y = ptr_y
 
     def color(self, color):
