@@ -1202,9 +1202,12 @@ or more detections with slightly different coordinates. On some widgets this
 results in flicker as the control updates multiple times. The GUI does not use
 double-click events: any attempt to detect these would be suspect.
 
-The `driver/tft_local.py` file contains a variable `_TOUCH_DELAY` which represents a
-delay in ms, normally 0. A higher value (say 200) mitigates flicker at the cost
-of slowing the response to touches.
+The `driver/tft_local.py` file contains a variable `_TOUCH_DELAY` representing
+a delay in ms, normally 0. A higher value (say 200) mitigates flicker at the
+cost of slowing the response to touches.
+
+The internal font renders much faster than Python fonts, but glyphs such as `£`
+and `¬` render incorrectly.
 
 Other issues are detailed in [the driver document](./DRIVER.md). These do not
 affect GUI operation.
