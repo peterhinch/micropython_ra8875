@@ -13,8 +13,8 @@ from micropython import const
 
 # *** EDIT THIS ***
 # Match your display: 800*480 or 480*272
-_WIDTH = const(800)
-_HEIGHT = const(480)
+_WIDTH = const(480)
+_HEIGHT = const(272)
 # Match your wiring
 _SPI = const(2)
 _RESET = 'X4'
