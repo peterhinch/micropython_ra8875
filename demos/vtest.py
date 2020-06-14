@@ -3,6 +3,8 @@
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2019 Peter Hinch
 
+# Updated for uasyncio V3
+
 import urandom
 import time
 from cmath import rect, pi
@@ -89,7 +91,7 @@ async def aclock(dial, lbldate, lbltim):
         await asyncio.sleep(1)
 
 class VScreen(Screen):
-    def __init__(self, loop):
+    def __init__(self):
         super().__init__()
         labels = {'fontcolor' : WHITE,
                   'border' : 2,
@@ -102,17 +104,20 @@ class VScreen(Screen):
         quitbutton()
         # Set up random vector display with two pointers
         dial = VectorDial((0, 0), height = 200, ticks = 12, fgcolor = YELLOW, arrow = True)
-        loop.create_task(ptr_test(dial))
-        loop.create_task(ptr_test(dial))
+        asyncio.create_task(ptr_test(dial))
+        asyncio.create_task(ptr_test(dial))
         # Set up clock display: instantiate labels
         lbldate = Label((240, 210), width = 239, **labels)
         lbltim = Label((240, 235), width = 80, **labels)
         dial = VectorDial((240, 0), height = 200, ticks = 12, fgcolor = GREEN, pip = GREEN)
-        loop.create_task(aclock(dial, lbldate, lbltim))
+        asyncio.create_task(aclock(dial, lbldate, lbltim))
 
+def test():
+    print('Test TFT panel...')
+    setup()
+    try:
+        Screen.change(VScreen)
+    finally:
+        asyncio.new_event_loop()
 
-print('Test TFT panel...')
-# Instantiate loop before calling setup if you need to change queue sizes
-loop = asyncio.get_event_loop()
-setup()
-Screen.change(VScreen, args=(loop,))
+test()

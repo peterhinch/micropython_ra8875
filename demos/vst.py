@@ -1,7 +1,9 @@
 # vst.py Demo/test program for vertical slider class for Pyboard RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 from math import pi
@@ -49,9 +51,8 @@ class VerticalSliderScreen(Screen):
             fgcolor = GREEN, cbe_args = ('Slave2',), cb_move = self.slave_moved, cbm_args = (2,), **table)
         master = Slider((0, y), font = font10,
             fgcolor = YELLOW, cbe_args = ('Master',), cb_move = self.master_moved, value=0.5, border = 2, **table)
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.task1())
-        loop.create_task(self.task2())
+        asyncio.create_task(self.task1())
+        asyncio.create_task(self.task2())
     # On/Off toggle: enable/disable quit button and one slider
         bs = ButtonList(self.cb_en_dis)
         lst_en_dis = [self.slave1, btnquit]
@@ -83,7 +84,7 @@ class VerticalSliderScreen(Screen):
         for item in itemlist:
             item.greyed_out(disable)
 
-# THREADS
+# TASKS
     async def task1(self):
         angle = 0
         while True:
@@ -107,6 +108,9 @@ def test():
     print('Test TFT panel...')
     setup()  # Initialise GUI (see tft_local.py)
     Screen.set_grey_style(desaturate = False) # dim
-    Screen.change(VerticalSliderScreen)       # Run it!
+    try:
+        Screen.change(VerticalSliderScreen)       # Run it!
+    finally:
+        asyncio.new_event_loop()
 
 test()

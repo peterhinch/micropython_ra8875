@@ -1,7 +1,9 @@
 # tbox.py Test/demo of Textbox
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 from micropython_ra8875.py.ugui import Screen
@@ -126,7 +128,7 @@ def btn_cb(button, tb1, tb2, n):
     tb2.scroll(n)
 
 class TScreen(Screen):
-    def __init__(self, loop):
+    def __init__(self):
         super().__init__()
         fwdbutton(0, 242, BackScreen, 'Fast')
         fwdbutton(120, 242, TabScreen, 'Tabs')
@@ -141,18 +143,22 @@ class TScreen(Screen):
         for btn in btns:
             btn.greyed_out(True)  # Disallow until textboxes are populated
 
-        loop.create_task(txt_test(tb1, None))
-        loop.create_task(txt_test(tb2, btns))
+        asyncio.create_task(txt_test(tb1, None))
+        asyncio.create_task(txt_test(tb2, btns))
 
 
-print('''Main screen populates text boxes slowly to show
-clipping and wrapping in action. "Fast" screen
-shows fast updates using internal font. "Tab"
-screen shows use of tab characters with Python
-font.
-Text boxes may be scrolled by touching them near
-the top or bottom.''')
-# Instantiate loop before calling setup if you need to change queue sizes
-loop = asyncio.get_event_loop()
-setup()
-Screen.change(TScreen, args=(loop,))
+def test():
+    print('''Main screen populates text boxes slowly to show
+    clipping and wrapping in action. "Fast" screen
+    shows fast updates using internal font. "Tab"
+    screen shows use of tab characters with Python
+    font.
+    Text boxes may be scrolled by touching them near
+    the top or bottom.''')
+    setup()
+    try:
+        Screen.change(TScreen)
+    finally:
+        asyncio.new_event_loop()
+
+test()

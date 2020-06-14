@@ -8,7 +8,7 @@
 # 480x272 https://www.adafruit.com/product/1591
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
 
 # The following sources were used in writing this driver.
 # CircuitPython library https://github.com/adafruit/Adafruit_CircuitPython_RA8875
@@ -17,6 +17,8 @@
 # written by Limor Fried/Ladyada for Adafruit Industries.
 # Datasheet: https://cdn-shop.adafruit.com/datasheets/RA8875_DS_V19_Eng.pdf
 # App note: https://cdn-shop.adafruit.com/datasheets/ra8875+app+note.pdf
+
+# Updated for uasyncio V3
 
 from utime import sleep_ms
 import uasyncio as asyncio
@@ -64,7 +66,7 @@ class RA8875:
         r, g, b = rgb
         return (r & 0xf8) | ((g & 0xe0) >> 5) | ((g & 0x1c) << 11) | ((b & 0xf8) << 5)
 
-    def __init__(self, spi, pincs, pinrst, width, height, loop=None):
+    def __init__(self, spi, pincs, pinrst, width, height, touch=True):
         if (width, height) not in ((800, 480), (480, 272)):
             raise ValueError('Supported sizes are 800x480 and 480x272')
         self._spi = spi
@@ -97,8 +99,8 @@ class RA8875:
         # Backlight
         self._write_reg(0x8A, 0x80 | 0x0a)  # RA8875_P1CR, RA8875_P1CR_ENABLE | RA8875_PWM_CLK_DIV1024
         self._write_reg(0x8B, 0xff)  # tft.PWM1out(255);
-        if loop is not None:
-            loop.create_task(self._dotouch())
+        if touch:
+            asyncio.create_task(self._dotouch())
 
     def calibrate(self, xmin, ymin, xmax, ymax):
         self._calibrated = True

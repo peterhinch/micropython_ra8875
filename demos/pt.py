@@ -3,7 +3,7 @@
 
 # The MIT License (MIT)
 #
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ from cmath import rect
 
 from micropython_ra8875.py.ugui import Screen
 from micropython_ra8875.py.colors import *
-import micropython_ra8875.py.asyn as asyn
 from micropython_ra8875.py.plot import PolarGraph, PolarCurve, CartesianGraph, Curve, TSequence
 
 from micropython_ra8875.widgets.buttons import Button
@@ -215,8 +214,7 @@ class RealtimeScreen(Screen):
         self.buttonlist.append(refreshbutton((curve,)))
 
     def go(self, curve):
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.acquire(curve))
+        asyncio.create_task(self.acquire(curve))
 
     async def acquire(self, curve):
         for but in self.buttonlist:
@@ -239,17 +237,12 @@ class RealtimeScreen(Screen):
 class Tseq(Screen):
     def __init__(self):
         super().__init__()
-        def cancel():
-            loop = asyncio.get_event_loop()
-            loop.create_task(asyn.Cancellable.cancel_all())
-        backbutton(cancel)
         g = CartesianGraph((0, 0), height = 250, width = 250, xorigin = 10)
         tsy = TSequence(g, YELLOW, 50)
         tsr = TSequence(g, RED, 50)
-        loop = asyncio.get_event_loop()
-        loop.create_task(asyn.Cancellable(self.acquire, g, tsy, tsr)())
+        self._acqu = asyncio.create_task(self.acquire(g, tsy, tsr))
+        backbutton(self._acqu.cancel)
 
-    @asyn.cancellable
     async def acquire(self, graph, tsy, tsr):
         t = 0.0
         while True:

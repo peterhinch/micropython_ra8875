@@ -99,11 +99,7 @@ Constructor. This takes the following mandatory arguments.
  of 1. Used to perform a hardware reset.
  4. `width` Display width and height. Supported values are 480x272 and 800x480.
  5. `height`
- 6. `loop=None` An event loop instance or `None`.
-
-If `loop` is supplied the constructor launches a `._dotouch` asynchronous
-method which handles the touch panel. If `None` is passed this will not be run:
-the touch panel will be inoperative.
+ 6. `touch=True` If `False` the touch panel will be disabled.
 
 Display methods required for GUI:  
  1. `clr_scr` No args. Clear screen (all pixels off). In testing this sometimes

@@ -1,7 +1,9 @@
 # audio.py Demo/test program for 800x480 screen with RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 import urandom
@@ -96,7 +98,7 @@ async def run(meters, vctrl, bctrl):
         await asyncio.sleep_ms(200)
 
 class GEQ(Screen):
-    def __init__(self, loop):
+    def __init__(self):
         super().__init__()
         quitbutton()
         source(20, 0)
@@ -104,11 +106,15 @@ class GEQ(Screen):
         bctrl = balance(400, 50)
         lst_geq = geq(0, 250)
         passthru(400, 180, lst_geq)
-        loop.create_task(run(meters(630, 0), vctrl, bctrl))
+        asyncio.create_task(run(meters(630, 0), vctrl, bctrl))
 
+def test():
+    print('Test TFT panel...')
+    setup()  # Initialise GUI (see tft_local.py)
+    Screen.set_grey_style(desaturate = False) # dim
+    try:
+        Screen.change(GEQ)       # Run it!
+    finally:
+        asyncio.new_event_loop()
 
-print('Test TFT panel...')
-loop = asyncio.get_event_loop()
-setup()  # Initialise GUI (see tft_local.py)
-Screen.set_grey_style(desaturate = False) # dim
-Screen.change(GEQ, args=(loop,))       # Run it!
+test()

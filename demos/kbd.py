@@ -1,7 +1,9 @@
 # kbd.py Demo/test program for 800x480 screen with RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 from micropython_ra8875.py.ugui import Screen
@@ -94,7 +96,12 @@ class KBD(Screen):
         keys = make_keys(tb)  # Create normal keys
         ctrl(tb, keys)  # Create control keys
 
-print('Test TFT panel...')
-loop = asyncio.get_event_loop()
-setup()  # Initialise GUI (see tft_local.py)
-Screen.change(KBD)       # Run it!
+def test():
+    print('Test TFT panel...')
+    setup()  # Initialise GUI (see tft_local.py)
+    try:
+        Screen.change(KBD)       # Run it!
+    finally:
+        asyncio.new_event_loop()
+
+test()

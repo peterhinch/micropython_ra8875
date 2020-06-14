@@ -1,7 +1,9 @@
 # cal.py Calibration utility for ra8875 driver.
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 import uos as os
@@ -22,10 +24,10 @@ msg1 = '''To calibrate touch the screen at the top left
 and bottom right hand corners of the screen
 where the yellow lines meet - ideally with a
 stylus.
-Record the resultant x and y values.
-Adapt tft_local.py accordingly.
+When you have done this, press ctrl-c.
+You will have the option to update tft_local.py.
 
-Press ctrl-c to quit.'''
+Press ctrl-c to continue.'''
 
 x = 50
 y = 80
@@ -44,11 +46,13 @@ async def do_touch(tft):
         await asyncio.sleep_ms(20)
 
 print('See on-screen instructions.')
-loop = asyncio.get_event_loop()
 try:
-    loop.run_until_complete(do_touch(tft))
+    asyncio.run(do_touch(tft))
 except KeyboardInterrupt:
-    loop.close()
+    pass
+finally:
+    asyncio.new_event_loop()
+
 if not data[2] or not input('Keep these calibration values (y/n)? ').lower() == 'y':
     print('No changes made. Quitting.')
     sys.exit(0)

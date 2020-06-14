@@ -1,12 +1,15 @@
 # ugui.py Micropython GUI library
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
+from uasyncio import Event
 import gc
+from micropython_ra8875.primitives.delay_ms import Delay_ms
 
-from micropython_ra8875.py.asynch import Delay_ms, Event
 from micropython_ra8875.py.colors import *
 from micropython_ra8875.driver.constants import *
 
@@ -72,12 +75,11 @@ class Screen:
         cs_new._do_open(cs_old) # Clear and redraw
         cs_new.after_open() # Optional subclass method
         if init:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(Screen.monitor())
+            asyncio.run(Screen.monitor())
 
     @classmethod
     async def monitor(cls):
-        await cls.is_shutdown
+        await cls.is_shutdown.wait()
 
     @classmethod
     def back(cls):
@@ -103,9 +105,8 @@ class Screen:
         self.displaylist = []
         self.modal = False
         if Screen.current_screen is None: # Initialising class and task
-            loop = asyncio.get_event_loop()
-            loop.create_task(Screen.objtouch.touchtest()) # One task only
-            loop.create_task(self._garbage_collect())
+            asyncio.create_task(Screen.objtouch.touchtest()) # One task only
+            asyncio.create_task(self._garbage_collect())
         Screen.current_screen = self
         self.parent = None
 

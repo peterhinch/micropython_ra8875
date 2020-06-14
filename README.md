@@ -24,7 +24,9 @@ primitives and ensures that controls are scalable. The API is via event driven
 callbacks.
 
 The GUI uses `uasyncio` for scheduling and has been tested on Pyboard V1.1 and
-on Pyboard D. Supported hardware from Adafruit:
+on Pyboard D. It has been updated for uasyncio V3 which is built-in to daily
+builds and will be included in release builds from V1.13. Supported hardware
+from Adafruit:
 
 [Controller board](https://www.adafruit.com/product/1590)  
 [4.3 inch 480x272 TFT display](https://www.adafruit.com/product/1591)  

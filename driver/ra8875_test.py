@@ -8,7 +8,7 @@ import micropython_ra8875.fonts.font10 as font10
 from micropython_ra8875.py.colors import *  # Colors
 from micropython_ra8875.driver.tft_local import setup
 
-tft = setup(True, False)  # No aysncio
+tft = setup(True, False)  # No asyncio
 
 # Draw basic shapes
 x = 10

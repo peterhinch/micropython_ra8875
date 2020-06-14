@@ -1,5 +1,6 @@
 # RA8875 GUI
 
+V0.19 Beta 13th June 2020 Supports (and requires) uasyncio V3.
 V0.18 Beta 1st September 2019.
 
 This is a simple event driven touch GUI interface for MicroPython targets used
@@ -13,8 +14,8 @@ It should work with the [7 inch 800x480](https://www.adafruit.com/product/2354)
 display as the Adafruit driver makes no distinction between the 5 and 7 inch
 variants.
 
-It should work with most targets supporting the Viper code generator. Currently
-this excludes ESP32. RAM limitations mean it is unlikely to work on ESP8266.
+It should work with most targets supporting the Viper code generator. RAM
+limitations mean it is unlikely to work on ESP8266.
 
 ![Image](./dials.JPG)
 
@@ -28,13 +29,6 @@ sample fonts are provided.
 
 An extension for plotting simple graphs is provided and is described
 [here](./LPLOT.md).
-
-### V0.16 Refactor
-
-Widgets are implemented as modules in the `widgets` directory. This reduces RAM
-usage: the application only imports widgets that it uses. The structure enables
-the addition of new widgets without the need to change the core GUI module and
-without increasing the RAM usage of existing applications.
 
 # Contents
 
@@ -80,13 +74,10 @@ without increasing the RAM usage of existing applications.
 
 # 1. Getting started
 
-The GUI requires `uasyncio`. On many platforms this is pre-installed. At the
-REPL issue
-```python
-import uasyncio
-```
-If an `ImportError` occurs you will need to install it. Instructions may be
-found [here](https://github.com/peterhinch/micropython-async/blob/master/TUTORIAL.md).
+The GUI requires `uasyncio` V3. This is included in daily builds and will be
+included in release builds from V1.13. Users upgrading from version 0.18 should
+either use `rshell`'s `rsync` or delete the `micropython_ra8875` directory on
+the target and reinstall.
 
 ## 1.1 Installation
 
@@ -196,6 +187,8 @@ Demos for 480x272 displays (will run on 800x480).
 Demos for 800x480 displays only.
  1. `audio.py` A control panel for a HiFi system with simulated audio.
  2. `kbd.py` A qwerty keyboard feeding a textbox.
+
+In case of problems see [Troubleshooting](./GUI.md#11-troubleshooting).
 
 ## 1.4 A minimal code example
 
@@ -1214,7 +1207,14 @@ affect GUI operation.
 
 # 11. Troubleshooting
 
-Common issues:  
+Issues running test scripts:
+ 1. Display corruption: usually caused by dimensions in `driver/tft_local` not
+ matching the display hardware. Solution: edit the file and copy to target.
+ 2. Touch panel not working properly: usually caused by `driver/tft_local.py`
+ having calibration values that don't match the display hardware. Solution: run
+ [calibration](./GUI.md#12-calibration).
+
+Common application issues:  
  1. Display corruption. Caused by part of a widget straying beyond the limits
  of the display. Check widget placement.
  2. Tracebacks pointing to ugui.py. Usually results from a callback getting

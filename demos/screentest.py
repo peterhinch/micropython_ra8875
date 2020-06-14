@@ -1,7 +1,9 @@
 # screentest.py Test/demo of multiple screens for Pybboard RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import uasyncio as asyncio
 from math import pi
@@ -72,9 +74,8 @@ class TaskScreen(Screen):
         self.dial1 = Dial((350, 10), fgcolor = GREEN, border = 2, pointers = (0.9, 0.7))
         self.dial2 = Dial((350, 120), fgcolor = YELLOW, border = 2,  pointers = (0.9, 0.7))
         self.pause = False  # asyncio can't pause coros so handle at application level
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.maintask(self.dial1, True))
-        loop.create_task(self.maintask(self.dial2))
+        asyncio.create_task(self.maintask(self.dial1, True))
+        asyncio.create_task(self.maintask(self.dial2))
 
         fwdbutton(0, 242, BackScreen)
         backbutton(390, 242)

@@ -1,14 +1,17 @@
 # tft.py TFT class for Pybboard TFT GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
 
 # This file is intended to provide a compatibility layer between the GUI and a
 # device driver. It subclasses the driver to enable greying out of controls.
 # When porting the GUI to use a driver for another large display, only this
 # file, constants.py and tft_local.py should need adapting.
 
+# Updated for uasyncio V3
+
 import uasyncio as asyncio
+from micropython_ra8875.primitives.delay_ms import Delay_ms
 from micropython_ra8875.driver.ra8875 import RA8875
 from micropython_ra8875.py.ugui import Screen
 from micropython_ra8875.py.colors import *
@@ -24,8 +27,8 @@ class TFT(RA8875):
             hor += cols
         return hor, vert
 
-    def __init__(self, spi, pincs, pinrst, width, height, tdelay, loop):
-        super().__init__(spi, pincs, pinrst, width, height, loop)
+    def __init__(self, spi, pincs, pinrst, width, height, tdelay, touch):
+        super().__init__(spi, pincs, pinrst, width, height, touch)
         self.tdelay = tdelay  # Touch mode
         self._is_grey = False  # Not greyed-out
         self.dim(2)  # Default grey-out: dim colors by factor of 2

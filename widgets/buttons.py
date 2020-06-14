@@ -1,11 +1,11 @@
 # buttons.py Extension to ugui providing pushbutton classes
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
 
 import uasyncio as asyncio
 from micropython_ra8875.py.ugui import Touchable
-from micropython_ra8875.py.asynch import Delay_ms
+from micropython_ra8875.primitives.delay_ms import Delay_ms
 from micropython_ra8875.py.colors import *
 
 dolittle = lambda *_ : None
@@ -13,6 +13,8 @@ dolittle = lambda *_ : None
 # Button coordinates relate to bounding box (BB). x, y are of BB top left corner.
 # likewise width and height refer to BB, regardless of button shape
 # If font is None button will be rendered without text
+
+# Updated for uasyncio V3
 
 class Button(Touchable):
     lit_time = 1000
@@ -86,8 +88,7 @@ class Button(Touchable):
             self.show() # must be on current screen
             self.delay.trigger(Button.lit_time)
         if self.lp_callback is not None:
-            loop = asyncio.get_event_loop()
-            loop.create_task(self.longpress())
+            asyncio.create_task(self.longpress())
         if not self.onrelease:
             self.callback(self, *self.callback_args) # Callback not a bound method so pass self
 

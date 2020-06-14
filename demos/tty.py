@@ -1,7 +1,9 @@
 # tty.py Demo/test program for 800x480 screen with RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 # TODO add buttons for reset, ctrl-c, ctrl-d
 # Consider cursor
@@ -15,11 +17,13 @@ from micropython_ra8875.widgets.label import Label
 from micropython_ra8875.widgets.textbox import Textbox
 from micropython_ra8875.fonts import font10, font14
 from micropython_ra8875.driver.tft_local import setup
-from pyb import UART
+from pyb import UART, Pin
 from utime import ticks_diff, ticks_ms
 
 CURSOR = '_'
 NLINES = 20
+pin_rst = Pin('Y3', Pin.OUT_OD)
+pin_rst.value(1)
 
 class Key(Button):  # A Key is a Button whose text may dynamically change
     def __init__(self, x, y, text, shift, uart):
@@ -44,12 +48,9 @@ def quitbutton():
 
 def bcb(button, uart):  # Callback from normal keys
     ch = button.text
-    if ch == 'En':
-        ch = '\r\n'
-    elif ch == 'Bs':
-        ch = b'\x08' # b'\x1b[K'
-        uart.write(ch)
-        return
+    d = { 'En' : b'\r\n', 'Bs' : b'\x08', 'Tab' : b'\x09', 'Ctrl-c' : b'\x03', 'Ctrl-d' : b'\x04'}
+    if ch in d:
+        ch = d[ch]
     uart.write(ch)
 
 def process_char(ch, tb):
@@ -84,20 +85,37 @@ def make_keys(uart):  # Create alphanumeric keys
         y += 55
     return keys
 
+async def do_rst():
+    print('RESET', 0)  # TODO
+    pin_rst.value(0)
+    await asyncio.sleep_ms(500)
+    pin_rst.value(1)
+    print('RESET', 1)  # TODO
+
+def rst(_):
+    asyncio.create_task(do_rst())
+
 def ctrl(uart, keys):  # Create control keys
     table = { 'shape' : CIRCLE, 'fgcolor' : RED, 'fontcolor' : WHITE, 'litcolor' : YELLOW, }
     def shift(_):
         for k in keys:
             k.do_shift()
     Button((741, 55), font = font14, text = 'En', callback=bcb, args = (uart,), **table)
+    Button((27, 55), font = font14, text = 'Tab', callback=bcb, args = (uart,), **table)
     Button((715, 0), font = font14, text = 'Bs', callback=bcb, args = (uart,), **table)
-    Button((300, 220), font = font14, shape = CLIPPED_RECT, width = 200, height = 30,
+    Button((300, 225), font = font14, shape = CLIPPED_RECT, width = 200, height = 30,
            litcolor = YELLOW, fgcolor = LIGHTGREEN, callback = bcb, args = (uart,), text = " ")  # Spacebar
-    Button((0, 165), font = font14, text = 'Shift', callback=shift,
+    Button((715, 170), font = font14, width = 80, height = 40, text = 'Ctrl-c', callback=bcb, args = (uart,),
+           shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
+    Button((715, 225), font = font14, width = 80, height = 40, text = 'Ctrl-d', callback=bcb, args = (uart,),
+           shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
+    Button((715, 280), font = font14, width = 80, height = 40, text = 'Reset', callback=rst),
+           shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
+    Button((0, 170), font = font14, text = 'Shift', height = 40, callback=shift,
            shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
 
 def tbox(x, y):  # Textbox
-    return Textbox((x, y), 600, 8, font=IFONT16, fgcolor = RED, bgcolor = DARKGREEN,
+    return Textbox((x, y), 600, 11, font=IFONT16, fgcolor = RED, bgcolor = DARKGREEN,
                    fontcolor = GREEN, repeat = False, clip = False)
 
 # This is a bit of a hack. Processing a character at a time leads to flicker
@@ -106,7 +124,7 @@ async def handle_input(uart, sr, tb):
     while True:
         ch = await sr.readexactly(1)
         ch = ch.decode()
-        #print('ch', hex(ord(ch)))
+        #print('ch=', ch, hex(ord(ch)))
         if ch == '\r':
             continue
         if ch == '\x08':  # Pyboard echoes Backspace + VT100 code
@@ -121,13 +139,13 @@ async def handle_input(uart, sr, tb):
                 s = s.decode().replace('\r','')
                 #for char in s:
                     #print('s:', char, hex(ord(char)))
-                tb.append(''.join((ch, s)), ntrim = NLINES)
+                tb.append(''.join((ch, s)), ntrim = NLINES)  # TODO splits line on tab expansion because tb.append puts on new line
             else:
                 process_char(ch, tb)
 
 
 class KBD(Screen):
-    def __init__(self, loop):
+    def __init__(self):
         super().__init__()
         uart = UART(1, 115200, read_buf_len=256)
         sreader = asyncio.StreamReader(uart)
@@ -135,9 +153,11 @@ class KBD(Screen):
         tb = tbox(0, 280)  # Create textbox
         keys = make_keys(uart)  # Create normal keys
         ctrl(uart, keys)  # Create control keys
-        loop.create_task(handle_input(uart, sreader, tb))
+        asyncio.create_task(handle_input(uart, sreader, tb))
 
 print('Test TFT panel...')
-loop = asyncio.get_event_loop()
 setup()  # Initialise GUI (see tft_local.py)
-Screen.change(KBD, args=(loop,))       # Run it!
+try:
+    Screen.change(KBD)       # Run it!
+finally:
+    asyncio.new_event_loop()

@@ -1,7 +1,9 @@
 # hst.py Demo/test program for horizontal slider class for Pyboard RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
-# Copyright (c) 2019 Peter Hinch
+# Copyright (c) 2019-2020 Peter Hinch
+
+# Updated for uasyncio V3
 
 import urandom
 import uasyncio as asyncio
@@ -62,9 +64,8 @@ class SliderScreen(Screen):
                       text = 'Disable', height=30, width=90, args = [True, lst_en_dis])
         bs.add_button((280, 240), font = font14, fontcolor = BLACK, fgcolor = RED,
                       text = 'Enable', height=30, width=90, args = [False, lst_en_dis])
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.test_meter(meter1))
-        loop.create_task(self.test_meter(meter2))
+        asyncio.create_task(self.test_meter(meter1))
+        asyncio.create_task(self.test_meter(meter2))
 
 # CALLBACKS
 # cb_end occurs when user stops touching the control
@@ -116,10 +117,11 @@ class SliderScreen(Screen):
 
 def test():
     print('Test TFT panel...')
-    # Instantiate loop before calling setup to change queue sizes
-    loop = asyncio.get_event_loop()
     setup()
     Screen.set_grey_style(desaturate = False) # dim
-    Screen.change(SliderScreen)       # Run it!
+    try:
+        Screen.change(SliderScreen)       # Run it!
+    finally:
+        asyncio.new_event_loop()
 
 test()
