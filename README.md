@@ -37,7 +37,8 @@ Non-Adafruit display hardware may or may not work: the detailed hardware
 specifications for displays may vary, requiring corresponding changes to the
 device driver code. I am unlikely to be able to support this.
 
-Most GUI users will require only the [GUI document](docs/GUI.md).
+Most users will require only the following:  
+## [GUI document](docs/GUI.md).
 
 Device driver documentation is [here](docs/DRIVER.md). A sample image of the
 4.3 inch display:

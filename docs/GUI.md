@@ -47,6 +47,10 @@ An extension for plotting simple graphs is provided and is described
 3. [Program Structure](./GUI.md#3-program-structure)  
   3.1 [Initialisation](./GUI.md#31-initialisation)  
 4. [Class Screen](./GUI.md#4-class-screen)  
+  4.1 [Class methods](./GUI.md#41-class-methods)  
+  4.2 [Constructor](./GUI.md#42-constructor)  
+  4.3 [Callback methods](./GUI.md#43-callback-methods)  
+  4.4 [Method](./GUI.md#44-method)  
 5. [Display Classes](./GUI.md#5-display-classes)  
   5.1 [Class Label](./GUI.md#51-class-label)  
   5.2 [Class Textbox](./GUI.md#52-class-textbox)  
@@ -425,7 +429,7 @@ design.
 
 This takes no arguments.
 
-## 4.3 Callback Methods
+## 4.3 Callback methods
 
 These are null functions which may be redefined in user subclasses.
 
