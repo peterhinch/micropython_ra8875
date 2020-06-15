@@ -104,13 +104,13 @@ class VScreen(Screen):
         quitbutton()
         # Set up random vector display with two pointers
         dial = VectorDial((0, 0), height = 200, ticks = 12, fgcolor = YELLOW, arrow = True)
-        asyncio.create_task(ptr_test(dial))
-        asyncio.create_task(ptr_test(dial))
+        self.reg_task(ptr_test(dial))
+        self.reg_task(ptr_test(dial))
         # Set up clock display: instantiate labels
         lbldate = Label((240, 210), width = 239, **labels)
         lbltim = Label((240, 235), width = 80, **labels)
         dial = VectorDial((240, 0), height = 200, ticks = 12, fgcolor = GREEN, pip = GREEN)
-        asyncio.create_task(aclock(dial, lbldate, lbltim))
+        self.reg_task(aclock(dial, lbldate, lbltim))
 
 def test():
     print('Test TFT panel...')

@@ -143,8 +143,8 @@ class TScreen(Screen):
         for btn in btns:
             btn.greyed_out(True)  # Disallow until textboxes are populated
 
-        asyncio.create_task(txt_test(tb1, None))
-        asyncio.create_task(txt_test(tb2, btns))
+        self.reg_task(txt_test(tb1, None))
+        self.reg_task(txt_test(tb2, btns))
 
 
 def test():

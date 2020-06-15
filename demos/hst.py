@@ -64,8 +64,8 @@ class SliderScreen(Screen):
                       text = 'Disable', height=30, width=90, args = [True, lst_en_dis])
         bs.add_button((280, 240), font = font14, fontcolor = BLACK, fgcolor = RED,
                       text = 'Enable', height=30, width=90, args = [False, lst_en_dis])
-        asyncio.create_task(self.test_meter(meter1))
-        asyncio.create_task(self.test_meter(meter2))
+        self.reg_task(self.test_meter(meter1))
+        self.reg_task(self.test_meter(meter2))
 
 # CALLBACKS
 # cb_end occurs when user stops touching the control

@@ -14,9 +14,14 @@ from micropython_ra8875.py.colors import *
 from micropython_ra8875.driver.constants import *
 
 gc.collect()
+__version__ = (0, 1, 0)
 
 # Null function
 dolittle = lambda *_ : None
+
+async def _g():
+    pass
+type_coro = type(_g())
 
 
 class Screen:
@@ -59,6 +64,10 @@ class Screen:
         init = cls.current_screen is None
         if init:
             Screen() # Instantiate a blank starting screen
+        else:  # About to erase an existing screen
+            for entry in cls.current_screen.tasklist:
+                if entry[1]:  # To be cancelled on screen change
+                    entry[0].cancel()
         cs_old = cls.current_screen
         cs_old.on_hide() # Optional method in subclass
         if forward:
@@ -75,11 +84,15 @@ class Screen:
         cs_new._do_open(cs_old) # Clear and redraw
         cs_new.after_open() # Optional subclass method
         if init:
-            asyncio.run(Screen.monitor())
+            asyncio.run(Screen.monitor())  # Starts and ends uasyncio
 
     @classmethod
     async def monitor(cls):
         await cls.is_shutdown.wait()
+        for entry in cls.current_screen.tasklist:
+            entry[0].cancel()
+        await asyncio.sleep_ms(0)  # Allow subclass to cancel tasks
+        cls.tft.clr_scr()
 
     @classmethod
     def back(cls):
@@ -97,12 +110,12 @@ class Screen:
 
     @classmethod
     def shutdown(cls):
-        cls.tft.clr_scr()
-        cls.is_shutdown.set()
+        cls.is_shutdown.set()  # Tell monitor() to shutdown
 
     def __init__(self):
         self.touchlist = []
         self.displaylist = []
+        self.tasklist = []  # Allow instance to register tasks for shutdown
         self.modal = False
         if Screen.current_screen is None: # Initialising class and task
             asyncio.create_task(Screen.objtouch.touchtest()) # One task only
@@ -136,6 +149,11 @@ class Screen:
 
     def on_hide(self): # Optionally implemented in subclass
         return
+
+    def reg_task(self, task, on_change=False):  # May be passed a coro or a Task
+        if isinstance(task, type_coro):
+            task = asyncio.create_task(task)
+        self.tasklist.append([task, on_change])
 
     async def _garbage_collect(self):
         while True:

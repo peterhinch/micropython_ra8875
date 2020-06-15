@@ -50,9 +50,8 @@ def fwdbutton(x, y, screen, text='Next'):
     return Button((x, y), font = font10, fontcolor = BLACK, callback = fwd,
                   height = 25, width = 70, args = [screen], fgcolor = CYAN, text = text)
 
-def backbutton(cb=lambda *_: None):
+def backbutton():
     def back(button):
-        cb()
         Screen.back()
     return Button((454, 0), font = font10, fontcolor = BLACK, callback = back,
            fgcolor = RED,  text = 'X', height = 25, width = 25)
@@ -205,20 +204,19 @@ class DiscontScreen(Screen):
 class RealtimeScreen(Screen):
     def __init__(self):
         super().__init__()
-        self.buttonlist = []
-        self.buttonlist.append(backbutton())
-        self.buttonlist.append(ovlbutton())
+        self.aqu_task = None
+        backbutton()
+        ovlbutton()
         cartesian_graph = CartesianGraph((0, 0))
-        self.buttonlist.append(clearbutton(cartesian_graph))
+        self.clearbutton(cartesian_graph)
         curve = Curve(cartesian_graph, self.go)
-        self.buttonlist.append(refreshbutton((curve,)))
+        refreshbutton((curve,))
 
     def go(self, curve):
-        asyncio.create_task(self.acquire(curve))
+        self.aqu_task = asyncio.create_task(self.acquire(curve))
+        self.reg_task(self.aqu_task, True)
 
     async def acquire(self, curve):
-        for but in self.buttonlist:
-            but.greyed_out(True)
         x = -1
         await asyncio.sleep(0)
         while x < 1.01:
@@ -231,8 +229,13 @@ class RealtimeScreen(Screen):
             curve.point(x, -(y ** 0.5))
             x -= 0.05
             await asyncio.sleep_ms(100)
-        for but in self.buttonlist:
-            but.greyed_out(False)
+
+    def clearbutton(self, graph):
+        def clear(button):
+            self.aqu_task.cancel()
+            graph.clear()
+        return Button((400, 150), font = font10, fontcolor = BLACK, callback = clear,
+            fgcolor = GREEN,  text = 'Clear', height = 25, width = 70)
 
 class Tseq(Screen):
     def __init__(self):
@@ -240,8 +243,8 @@ class Tseq(Screen):
         g = CartesianGraph((0, 0), height = 250, width = 250, xorigin = 10)
         tsy = TSequence(g, YELLOW, 50)
         tsr = TSequence(g, RED, 50)
-        self._acqu = asyncio.create_task(self.acquire(g, tsy, tsr))
-        backbutton(self._acqu.cancel)
+        self.reg_task(self.acquire(g, tsy, tsr), True)  # Cancel on screen change
+        backbutton()
 
     async def acquire(self, graph, tsy, tsr):
         t = 0.0

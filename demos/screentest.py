@@ -67,6 +67,7 @@ class BackScreen(Screen):
 class TaskScreen(Screen):
     def __init__(self):
         super().__init__()
+        self.tasks = []  # Control cancellation explicitly
         Label((0, 0), font = font14, value = 'Green dial runs only')
         Label((0, 30), font = font14, value = 'when screen is visible')
         Label((0, 120), font = font14, value = "Yellow dial's value is")
@@ -74,11 +75,11 @@ class TaskScreen(Screen):
         self.dial1 = Dial((350, 10), fgcolor = GREEN, border = 2, pointers = (0.9, 0.7))
         self.dial2 = Dial((350, 120), fgcolor = YELLOW, border = 2,  pointers = (0.9, 0.7))
         self.pause = False  # asyncio can't pause coros so handle at application level
-        asyncio.create_task(self.maintask(self.dial1, True))
-        asyncio.create_task(self.maintask(self.dial2))
+        self.tasks.append(asyncio.create_task(self.maintask(self.dial1, True)))
+        self.tasks.append(asyncio.create_task(self.maintask(self.dial2)))
 
         fwdbutton(0, 242, BackScreen)
-        backbutton(390, 242)
+        self.backbutton(390, 242)  # Special backbutton
 
     def on_open(self):
         print('Start green dial')
@@ -98,6 +99,15 @@ class TaskScreen(Screen):
                 angle += pi * 2 * delta / 10
                 dial.value(angle)
                 dial.value(angle /10, 1)
+
+    def backbutton(self, x, y):
+        def back(button):
+            for task in self.tasks:
+                task.cancel()
+            self.tasks = []
+            Screen.back()
+        Button((x, y), height = 30, font = font14, fontcolor = BLACK, callback = back,
+            fgcolor = CYAN,  text = 'Back', shape = RECTANGLE, width = 80)
 
 class BaseScreen(Screen):
     def __init__(self):

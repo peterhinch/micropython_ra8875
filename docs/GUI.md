@@ -187,6 +187,8 @@ Demos for 480x272 displays (will run on 800x480).
 Demos for 800x480 displays only.
  1. `audio.py` A control panel for a HiFi system with simulated audio.
  2. `kbd.py` A qwerty keyboard feeding a textbox.
+ 3. `tty.py` A very basic terminal for accessing another MicroPython target's
+ REPL via a UART. Responses are displayed in a textbox.
 
 In case of problems see [Troubleshooting](./GUI.md#11-troubleshooting).
 
@@ -430,6 +432,16 @@ These are null functions which may be redefined in user subclasses.
  * `on_open` Called when a screen is instantiated but prior to display.
  * `after_open` Called after a screen has been displayed.
  * `on_hide` Called when a screen ceases to be current.
+
+## 4.4 Method
+
+ * `reg_task` args `task`, `on_change=False`. The first arg may be a `Task`
+ instance or a coroutine. It is a convenience method which provides for the
+ automatic cancellation of tasks. If a screen runs independent coros it can opt
+ to register these. On shudown, any registered tasks of the base screen are
+ cancelled. On screen change, registered tasks with `on_change` `True` are
+ cancelled. For finer control applications can ignore this method and handle
+ cancellation explicitly in code.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

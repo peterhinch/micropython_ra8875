@@ -106,7 +106,7 @@ class GEQ(Screen):
         bctrl = balance(400, 50)
         lst_geq = geq(0, 250)
         passthru(400, 180, lst_geq)
-        asyncio.create_task(run(meters(630, 0), vctrl, bctrl))
+        self.reg_task(run(meters(630, 0), vctrl, bctrl))
 
 def test():
     print('Test TFT panel...')

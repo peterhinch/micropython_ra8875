@@ -109,7 +109,7 @@ def ctrl(uart, keys):  # Create control keys
            shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
     Button((715, 225), font = font14, width = 80, height = 40, text = 'Ctrl-d', callback=bcb, args = (uart,),
            shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
-    Button((715, 280), font = font14, width = 80, height = 40, text = 'Reset', callback=rst),
+    Button((715, 280), font = font14, width = 80, height = 40, text = 'Reset', callback=rst,
            shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
     Button((0, 170), font = font14, text = 'Shift', height = 40, callback=shift,
            shape = CLIPPED_RECT, fgcolor = RED, fontcolor = WHITE, litcolor = YELLOW)
@@ -153,7 +153,7 @@ class KBD(Screen):
         tb = tbox(0, 280)  # Create textbox
         keys = make_keys(uart)  # Create normal keys
         ctrl(uart, keys)  # Create control keys
-        asyncio.create_task(handle_input(uart, sreader, tb))
+        self.reg_task(handle_input(uart, sreader, tb))
 
 print('Test TFT panel...')
 setup()  # Initialise GUI (see tft_local.py)
