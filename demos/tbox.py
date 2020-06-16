@@ -156,9 +156,6 @@ def test():
     Text boxes may be scrolled by touching them near
     the top or bottom.''')
     setup()
-    try:
-        Screen.change(TScreen)
-    finally:
-        asyncio.new_event_loop()
+    Screen.change(TScreen)
 
 test()

@@ -119,9 +119,6 @@ def test():
     print('Test TFT panel...')
     setup()
     Screen.set_grey_style(desaturate = False) # dim
-    try:
-        Screen.change(SliderScreen)       # Run it!
-    finally:
-        asyncio.new_event_loop()
+    Screen.change(SliderScreen)       # Run it!
 
 test()

@@ -192,7 +192,8 @@ Demos for 800x480 displays only.
  1. `audio.py` A control panel for a HiFi system with simulated audio.
  2. `kbd.py` A qwerty keyboard feeding a textbox.
  3. `tty.py` A very basic terminal for accessing another MicroPython target's
- REPL via a UART. Responses are displayed in a textbox.
+ REPL via a UART. Responses are displayed in a textbox. (Currently throws an
+ exception but I'm hoping uasyncio gets fixed here).
 
 In case of problems see [Troubleshooting](./GUI.md#11-troubleshooting).
 

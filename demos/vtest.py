@@ -115,9 +115,6 @@ class VScreen(Screen):
 def test():
     print('Test TFT panel...')
     setup()
-    try:
-        Screen.change(VScreen)
-    finally:
-        asyncio.new_event_loop()
+    Screen.change(VScreen)
 
 test()

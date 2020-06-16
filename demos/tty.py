@@ -157,7 +157,4 @@ class KBD(Screen):
 
 print('Test TFT panel...')
 setup()  # Initialise GUI (see tft_local.py)
-try:
-    Screen.change(KBD)       # Run it!
-finally:
-    asyncio.new_event_loop()
+Screen.change(KBD)       # Run it!

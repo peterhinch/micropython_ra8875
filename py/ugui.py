@@ -84,15 +84,20 @@ class Screen:
         cs_new._do_open(cs_old) # Clear and redraw
         cs_new.after_open() # Optional subclass method
         if init:
-            asyncio.run(Screen.monitor())  # Starts and ends uasyncio
+            try:
+                asyncio.run(Screen.monitor())  # Starts and ends uasyncio
+            finally:
+                asyncio.new_event_loop()
 
     @classmethod
     async def monitor(cls):
         await cls.is_shutdown.wait()
+        cls.is_shutdown.clear()
         for entry in cls.current_screen.tasklist:
             entry[0].cancel()
         await asyncio.sleep_ms(0)  # Allow subclass to cancel tasks
         cls.tft.clr_scr()
+        cls.current_screen = None  # Ensure another demo can run
 
     @classmethod
     def back(cls):

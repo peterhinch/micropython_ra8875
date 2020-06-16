@@ -112,9 +112,6 @@ def test():
     print('Test TFT panel...')
     setup()  # Initialise GUI (see tft_local.py)
     Screen.set_grey_style(desaturate = False) # dim
-    try:
-        Screen.change(GEQ)       # Run it!
-    finally:
-        asyncio.new_event_loop()
+    Screen.change(GEQ)       # Run it!
 
 test()
