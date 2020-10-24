@@ -25,9 +25,10 @@ callbacks.
 
 The GUI uses `uasyncio` for scheduling and has been tested on Pyboard V1.1 and
 on Pyboard D. It has been updated for uasyncio V3 which is built-in to daily
-builds and will be included in release builds from V1.13. Supported hardware
-from Adafruit:
+builds and will be included in release builds from V1.13. No knowledge of
+`uasyncio` is required to develop applications for the GUI.
 
+Supported hardware from Adafruit:  
 [Controller board](https://www.adafruit.com/product/1590)  
 [4.3 inch 480x272 TFT display](https://www.adafruit.com/product/1591)  
 [5 inch 800x480 TFT](https://www.adafruit.com/product/1596)  
@@ -45,4 +46,4 @@ Device driver documentation is [here](docs/DRIVER.md). A sample image of the
 
 ![Horizontal sliders](./docs/horiz_slider_2.JPG)
 
-[Further images](./docs/IMAGES.md)
+## [Further images](./docs/IMAGES.md)

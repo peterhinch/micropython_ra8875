@@ -19,7 +19,7 @@ may not be electrically compatible with the driver. See
 [references](./DRIVER.md#4-references) for details of the supported hardware
 and for the sources of information used.
 
-###### [GUI docs](./GUI.md)
+## [GUI docs](./GUI.md)
 
 # 1. The TFT class
 
