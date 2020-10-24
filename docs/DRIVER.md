@@ -158,7 +158,7 @@ last of these seems to be the correct one (subject to calibration). The driver
 makes no attempt to mitigate this. The setting of the debounce bit had no
 evident effect on this behaviour. This can cause flicker as widgets update
 multiple times. The `TFT` constructor arg `tdelay` attempts to mitigate this by
-delaying any response untile `tdelay` ms after the last touch event.
+delaying any response until `tdelay` ms after the last touch event.
 
 The RA8875 claims to provide a means of reading back the contents of the frame
 buffer. This seems broken. I removed functionality which aimed to support it as

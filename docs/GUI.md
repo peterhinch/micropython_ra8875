@@ -74,7 +74,8 @@ An extension for plotting simple graphs is provided and is described
 9. [Memory issues](./GUI.md#9-memory-issues)  
 10. [RA8875 issues](./GUI.md#10-ra8875-issues)  
 11. [Troubleshooting](./GUI.md#11-troubleshooting)
-12. [References](./GUI.md#12-references)  
+12. [Application design note](./README.md#12-application-design-note) Touch application design  
+13. [References](./GUI.md#13-references)  
 
 # 1. Getting started
 
@@ -856,7 +857,9 @@ Optional keyword only arguments:
  * `callback` Callback function which runs when button is pressed.
  * `args` A list/tuple of arguments for the above callback. Default `[]`.
  * `onrelease` Default `True`. If `True` the callback will occur when the
- button is released otherwise it will occur when pressed.
+ button is released otherwise it will occur when pressed. See
+ [Application design note](./README.md#12-application-design-note) for the
+ reason for this default.
  * `lp_callback` Callback to be used if button is to respond to a long press.
  Default `None`.
  * `lp_args` A list/tuple of arguments for above callback. Default `[]`.
@@ -1234,7 +1237,7 @@ Issues running test scripts:
 Common application issues:  
  1. Display corruption. Caused by part of a widget straying beyond the limits
  of the display. Check widget placement.
- 2. Tracebacks pointing to ugui.py. Usually results from a callback getting
+ 2. Tracebacks pointing to `ugui.py`. Usually results from a callback getting
  an incorrect number of arguments. Most callbacks receive the widget as an
  extra argument before any user specified args.
  3. Crash when display is initialised. This points to a power problem. The TFT
@@ -1242,7 +1245,24 @@ Common application issues:
  more capable power source. If powering by USB use shorter cables with a lower
  resistance.
 
-# 12. References
+# 12. Application design note
+
+There is an issue in a touch application where a control causes a new screen
+to overlay the current screen, or closes a screen to reveal the one below.
+Consider a `X` screen close button at the top right hand corner of each screen.
+If touched, the screen closes revealing the one below with its `X` button: the
+touch causes this immediately to be activated closing that screen too.
+
+For this reason the [Button class](./README.md#64-class-button) defaults to
+running the callback on release. While this fixes the problem of close buttons,
+it can introduce problems where buttons open screens: if multiple buttons are
+pressed at once, unexpected screen changes can occur. Either set such buttons
+to run the callback on press or use a control such as a listbox.
+
+The general point, where screens change, is to consider how continuing touch
+will affect the new screen.
+
+# 13. References
 
 Documentation for the underlying libraries may be found at these sites.  
 
@@ -1259,27 +1279,27 @@ Other references:
 # Appendix 1 Directory structure
 
 The GUI is structured as a Python package. One aim is to achieve a modular
-structure with the user importing only those modules which are required: this
-reduces the RAM requirement. The `ugui.py` file contains the commonest widgets,
-with more specialist ones in modules in the `support` directory. A further aim
-is to separate hardware dependent modules: this should aid porting the GUI to
-other device drivers.
+structure with the application importing only those modules which are required:
+this reduces the RAM requirement. It also enables new widgets to be added to
+the GUI with zero effect on existing applications.
 
 Hardware dependent files in the `driver` subdirectory:
  1. `ra8875.py` The device diver.
  2. `tft_local.py` Local hardware definition. This file should be edited to
  match your hardware.
  3. `tft.py` Compatibility layer between GUI and device driver.
- 4 `constants.py` Hardware dependent constants such as internal fonts.
+ 4. `constants.py` Hardware dependent constants such as internal fonts.
  5. `cal.py` Touchscreen calibration utility.
  6. `ra8875_test.py` Driver test program. See [RA8875 driver](./DRIVER.md).
 
 GUI files in the `py` subdirectory:
  1. `ugui.py` The micro GUI library.
  2. `colors.py` Constants such as colors and shapes.
- 3. `asynch.py` Synchronisation primitives [from here](https://github.com/peterhinch/micropython-async.git).
- 4. `asyn.py` Further primitives used by plot module.
- 5. `plot.py` The plot module.
+ 3. `plot.py` The plot module.
+
+Synchronisation primitives in `primitives`:
+ 1. `__init__.py`
+ 2. `delay_ms.py` 
 
 Widgets in the `widgets` directory:
  1. `buttons.py` Various types of pushbutton.

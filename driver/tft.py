@@ -134,9 +134,12 @@ class TFT(RA8875):
         x = 0  # Current touch coords
         y = 0
         def dotouch():
-            for obj in Screen.current_screen.touchlist:
-                if obj.visible and not obj.greyed_out():
-                    obj._trytouch(x, y)
+            tl = Screen.current_screen.touchlist
+            ids = id(Screen.current_screen)
+            for obj in iter(a for a in tl if a.visible and not a.greyed_out()):
+                obj._trytouch(x, y)  # Run user callback if touched
+                if ids != id(Screen.current_screen):  # cb may have changed screen
+                    break
         if td:
             tdelay = Delay_ms(func = dotouch, duration = td)
         while True:
@@ -149,8 +152,8 @@ class TFT(RA8875):
                 else:
                     dotouch()  # Process immediately
             elif not self.touched():
-                for obj in Screen.current_screen.touchlist:
-                    if obj.was_touched:
-                        obj.was_touched = False # Call _untouched once only
-                        obj.busy = False
-                        obj._untouched()
+                tl = Screen.current_screen.touchlist
+                for obj in iter(a for a in tl if a.was_touched):
+                    obj.was_touched = False # Call _untouched once only
+                    obj.busy = False
+                    obj._untouched()
