@@ -693,7 +693,150 @@ entry of data. If the user moves the control, its value will change and an
 optional callback will be executed. If another control's callback or a
 coroutine alters a control's value, its appearance will change accordingly.
 
-## 6.1 Class Slider
+## 6.1 Class Button
+
+This emulates a pushbutton, with a callback being executed each time the button
+is pressed. Buttons may be any one of three shapes: `CIRCLE`, `RECTANGLE`
+or `CLIPPED_RECT`.
+
+```python
+from micropython_ra8875.widgets.buttons import Button
+```
+
+Constructor mandatory positional argument:
+ 1. `location` 2-tuple defining position.
+
+Mandatory keyword only argument:
+ * `font` Font for button text
+
+Optional keyword only arguments:
+ * `shape` Must be `CIRCLE`, `RECTANGLE` or `CLIPPED_RECT`. Default `RECTANGLE`.
+ * `height` Height of the bounding box. Default 50 pixels.
+ * `width` Width of the bounding box. Default 50 pixels.
+ * `fill` Boolean. If `True` the button will be filled with the current
+ `fgcolor`.
+ * `fgcolor` Color of foreground (the control itself). Defaults to system
+ color.
+ * `bgcolor` Background color of object. Defaults to system background.
+ * `fontcolor` Text color. Defaults to system text color.
+ * `litcolor` If provided the button will display this color for one second
+ after being pressed.
+ * `text` Shown in centre of button. Default: an empty string.
+ * `callback` Callback function which runs when button is pressed.
+ * `args` A list/tuple of arguments for the above callback. Default `[]`.
+ * `onrelease` Default `True`. If `True` the callback will occur when the
+ button is released otherwise it will occur when pressed. See
+ [Application design note](./README.md#12-application-design-note) for the
+ reason for this default.
+ * `lp_callback` Callback to be used if button is to respond to a long press.
+ Default `None`.
+ * `lp_args` A list/tuple of arguments for above callback. Default `[]`.
+
+Method:
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
+ `None` returns the current 'greyed out' status of the control. Otherwise
+ enables or disables it, showing it in its new state.
+
+Class variables:
+ * `lit_time` Period in seconds the `litcolor` is displayed. Default 1.
+ * `long_press_time` Press duration for a long press. Default 1 second.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 6.2 Class ButtonList emulate a button with multiple states
+
+A `ButtonList` groups a number of buttons together to implement a button
+which changes state each time it is pressed. For example it might toggle
+between a green Start button and a red Stop button. The buttons are defined and
+added in turn to the `ButtonList` object. Typically they will be the same
+size, shape and location but will differ in color and/or text. At any time just
+one of the buttons will be visible, initially the first to be added to the
+object.
+
+Buttons in a `ButtonList` should not have callbacks. The `ButtonList` has
+its own user supplied callback which will run each time the object is pressed.
+However each button can have its own list of `args`. Callback arguments
+comprise the currently visible button followed by its arguments.
+```python
+from micropython_ra8875.widgets.buttons import ButtonList
+```
+
+Constructor argument:
+ * `callback` The callback function. Default does nothing.
+
+Methods:
+ * `add_button` Adds a button to the `ButtonList`. Arguments: as per the
+ `Button` constructor.
+ Returns the button object.
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
+ `None` returns the current 'greyed out' status of the control. Otherwise
+ enables or disables it, showing it in its new state.
+ * `value` Optional argument: a button in the set. If supplied and the button
+ is not active the currency changes to the supplied button and its callback is
+ run. Always returns the active button.
+
+Typical usage is as follows:
+``python
+def callback(button, arg):
+    print(arg)
+
+table = [
+     {'fgcolor' : GREEN, 'shape' : CLIPPED_RECT, 'text' : 'Start', 'args' : ['Live']},
+     {'fgcolor' : RED, 'shape' : CLIPPED_RECT, 'text' : 'Stop', 'args' : ['Die']},
+]
+bl = ButtonList(callback)
+for t in table: # Buttons overlay each other at same location
+    bl.add_button((10, 10), font = font14, fontcolor = BLACK, **t)
+``
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 6.3 Class RadioButtons
+
+These comprise a set of buttons at different locations. When a button is
+pressed, it becomes highlighted and remains so until another button is pressed.
+A callback runs each time the current button is changed.
+```python
+from micropython_ra8875.widgets.buttons import RadioButtons
+```
+
+Constructor positional arguments:
+ * `highlight` Color to use for the highlighted button. Mandatory.
+ * `callback` Callback when a new button is pressed. Default does nothing.
+ * `selected` Index of initial button to be highlighted. Default 0.
+
+Methods:
+ * `add_button` Adds a button. Arguments: as per the `Button` constructor.
+ Returns the Button instance.
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
+ `None` returns the current 'greyed out' status of the control. Otherwise
+ enables or disables it, showing it in its new state.
+ * `value` Optional argument: a button in the set. If supplied, and the
+ button is not currently active, the currency changes to the supplied button
+ and its callback is run. Always returns the currently active button.
+
+Typical usage:
+```python
+def callback(button, arg):
+    print(arg)
+
+table = [
+    {'text' : '1', 'args' : ['1']},
+    {'text' : '2', 'args' : ['2']},
+    {'text' : '3', 'args' : ['3']},
+    {'text' : '4', 'args' : ['4']},
+]
+x = 0
+rb = RadioButtons(callback, BLUE) # color of selected button
+for t in table:
+    rb.add_button((x, 180), font = font14, fontcolor = WHITE,
+                    fgcolor = LIGHTBLUE, height = 40, **t)
+    x += 60 # Horizontal row of buttons
+```
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 6.4 Class Slider
 
 These emulate linear potentiometers. Vertical `Slider` and horizontal
 `HorizSlider` variants are available. These are constructed and used
@@ -750,7 +893,7 @@ processed, enabling dynamic color change. See `demos/hst.py`.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 6.2 Class Knob
+## 6.5 Class Knob
 
 This emulates a rotary control capable of being rotated through a predefined
 arc.
@@ -791,7 +934,7 @@ Methods:
 
 ###### [Jump to Contents](./GUI.md#contents)
 
-## 6.3 Class Checkbox
+## 6.6 Class Checkbox
 
 This provides for Boolean data entry and display. In the `True` state the
 control can show an 'X' or a filled block of any color.
@@ -823,149 +966,6 @@ Methods:
  * `value` Optional Boolean argument `val`. If the provided value does not
  correspond to the control's current value, updates it; the checkbox is
  re-drawn and the callback executed. Always returns the control's value.
-
-###### [Jump to Contents](./GUI.md#contents)
-
-## 6.4 Class Button
-
-This emulates a pushbutton, with a callback being executed each time the button
-is pressed. Buttons may be any one of three shapes: `CIRCLE`, `RECTANGLE`
-or `CLIPPED_RECT`.
-
-```python
-from micropython_ra8875.widgets.buttons import Button
-```
-
-Constructor mandatory positional argument:
- 1. `location` 2-tuple defining position.
-
-Mandatory keyword only argument:
- * `font` Font for button text
-
-Optional keyword only arguments:
- * `shape` Must be `CIRCLE`, `RECTANGLE` or `CLIPPED_RECT`. Default `RECTANGLE`.
- * `height` Height of the bounding box. Default 50 pixels.
- * `width` Width of the bounding box. Default 50 pixels.
- * `fill` Boolean. If `True` the button will be filled with the current
- `fgcolor`.
- * `fgcolor` Color of foreground (the control itself). Defaults to system
- color.
- * `bgcolor` Background color of object. Defaults to system background.
- * `fontcolor` Text color. Defaults to system text color.
- * `litcolor` If provided the button will display this color for one second
- after being pressed.
- * `text` Shown in centre of button. Default: an empty string.
- * `callback` Callback function which runs when button is pressed.
- * `args` A list/tuple of arguments for the above callback. Default `[]`.
- * `onrelease` Default `True`. If `True` the callback will occur when the
- button is released otherwise it will occur when pressed. See
- [Application design note](./README.md#12-application-design-note) for the
- reason for this default.
- * `lp_callback` Callback to be used if button is to respond to a long press.
- Default `None`.
- * `lp_args` A list/tuple of arguments for above callback. Default `[]`.
-
-Method:
- * `greyed_out` Optional Boolean argument `val` default `None`. If
- `None` returns the current 'greyed out' status of the control. Otherwise
- enables or disables it, showing it in its new state.
-
-Class variables:
- * `lit_time` Period in seconds the `litcolor` is displayed. Default 1.
- * `long_press_time` Press duration for a long press. Default 1 second.
-
-###### [Jump to Contents](./GUI.md#contents)
-
-## 6.5 Class ButtonList emulate a button with multiple states
-
-A `ButtonList` groups a number of buttons together to implement a button
-which changes state each time it is pressed. For example it might toggle
-between a green Start button and a red Stop button. The buttons are defined and
-added in turn to the `ButtonList` object. Typically they will be the same
-size, shape and location but will differ in color and/or text. At any time just
-one of the buttons will be visible, initially the first to be added to the
-object.
-
-Buttons in a `ButtonList` should not have callbacks. The `ButtonList` has
-its own user supplied callback which will run each time the object is pressed.
-However each button can have its own list of `args`. Callback arguments
-comprise the currently visible button followed by its arguments.
-```python
-from micropython_ra8875.widgets.buttons import ButtonList
-```
-
-Constructor argument:
- * `callback` The callback function. Default does nothing.
-
-Methods:
- * `add_button` Adds a button to the `ButtonList`. Arguments: as per the
- `Button` constructor.
- Returns the button object.
- * `greyed_out` Optional Boolean argument `val` default `None`. If
- `None` returns the current 'greyed out' status of the control. Otherwise
- enables or disables it, showing it in its new state.
- * `value` Optional argument: a button in the set. If supplied and the button
- is not active the currency changes to the supplied button and its callback is
- run. Always returns the active button.
-
-Typical usage is as follows:
-``python
-def callback(button, arg):
-    print(arg)
-
-table = [
-     {'fgcolor' : GREEN, 'shape' : CLIPPED_RECT, 'text' : 'Start', 'args' : ['Live']},
-     {'fgcolor' : RED, 'shape' : CLIPPED_RECT, 'text' : 'Stop', 'args' : ['Die']},
-]
-bl = ButtonList(callback)
-for t in table: # Buttons overlay each other at same location
-    bl.add_button((10, 10), font = font14, fontcolor = BLACK, **t)
-``
-
-###### [Jump to Contents](./GUI.md#contents)
-
-## 6.6 Class RadioButtons
-
-These comprise a set of buttons at different locations. When a button is
-pressed, it becomes highlighted and remains so until another button is pressed.
-A callback runs each time the current button is changed.
-```python
-from micropython_ra8875.widgets.buttons import RadioButtons
-```
-
-Constructor positional arguments:
- * `highlight` Color to use for the highlighted button. Mandatory.
- * `callback` Callback when a new button is pressed. Default does nothing.
- * `selected` Index of initial button to be highlighted. Default 0.
-
-Methods:
- * `add_button` Adds a button. Arguments: as per the `Button` constructor.
- Returns the Button instance.
- * `greyed_out` Optional Boolean argument `val` default `None`. If
- `None` returns the current 'greyed out' status of the control. Otherwise
- enables or disables it, showing it in its new state.
- * `value` Optional argument: a button in the set. If supplied, and the
- button is not currently active, the currency changes to the supplied button
- and its callback is run. Always returns the currently active button.
-
-Typical usage:
-```python
-def callback(button, arg):
-    print(arg)
-
-table = [
-    {'text' : '1', 'args' : ['1']},
-    {'text' : '2', 'args' : ['2']},
-    {'text' : '3', 'args' : ['3']},
-    {'text' : '4', 'args' : ['4']},
-]
-x = 0
-rb = RadioButtons(callback, BLUE) # color of selected button
-for t in table:
-    rb.add_button((x, 180), font = font14, fontcolor = WHITE,
-                    fgcolor = LIGHTBLUE, height = 40, **t)
-    x += 60 # Horizontal row of buttons
-```
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -1056,6 +1056,8 @@ Methods:
 The callback is triggered if an item on the dropdown list is touched and that
 item is not currently selected (i.e. when a change occurs). Its first argument
 is the dropdown instance followed by any args specified to the constructor.
+
+###### [Jump to Contents](./GUI.md#contents)
 
 ## 6.9 Class Pad
 
