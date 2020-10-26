@@ -59,14 +59,15 @@ An extension for plotting simple graphs is provided and is described
   5.5 [Class Meter](./GUI.md#55-class-meter)  
   5.6 [Vector display](./GUI.md#56-vector-display)  
 6. [Control Classes](./GUI.md#6-control-classes)  
-  6.1 [Class Slider](./GUI.md#61-class-slider)  
-  6.2 [Class Knob](./GUI.md#62-class-knob)  
-  6.3 [Class Checkbox](./GUI.md#63-class-checkbox)  
-  6.4 [Class Button](./GUI.md#64-class-button)  
-  6.5 [Class ButtonList: emulate a button with multiple states](./GUI.md#65-class-buttonlist-emulate-a-button-with-multiple-states)  
-  6.6 [Class RadioButtons](./GUI.md#66-class-radiobuttons)  
+  6.1 [Class Button](./GUI.md#61-class-button)  
+  6.2 [Class ButtonList: emulate a button with multiple states](./GUI.md#62-class-buttonlist-emulate-a-button-with-multiple-states)  
+  6.3 [Class RadioButtons](./GUI.md#63-class-radiobuttons)  
+  6.4 [Class Slider](./GUI.md#64-class-slider)  
+  6.5 [Class Knob](./GUI.md#65-class-knob)  
+  6.6 [Class Checkbox](./GUI.md#66-class-checkbox)  
   6.7 [Class Listbox](./GUI.md#67-class-listbox)  
   6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
+  6.9 [Class Pad](./README.md#69-class-pad) Invisible touch sensitive region.  
 7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
@@ -1055,6 +1056,28 @@ Methods:
 The callback is triggered if an item on the dropdown list is touched and that
 item is not currently selected (i.e. when a change occurs). Its first argument
 is the dropdown instance followed by any args specified to the constructor.
+
+## 6.9 Class Pad
+
+This rectangular touchable control is invisible. It can be used to enable
+display class instances to respond to touch, or to create other touch sensitive
+regions.
+
+Constructor mandatory positional argument:
+ 1. `location` 2-tuple defining position.
+
+Optional keyword only arguments:
+ * `height=20` Dimensions.
+ * `width=50`
+ * `onrelease=True` If `True` the callback will occur when the pad is released
+ otherwise it will occur when pressed. See
+ [Application design note](./README.md#10-application-design-note) for the
+ reason for this default.
+ * `callback=None` Callback function which runs when button is pressed.
+ * `args=[]` A list/tuple of arguments for the above callback.
+ * `lp_callback=None` Callback to be used if button is to respond to a long
+ press.
+ * `lp_args=[]` A list/tuple of arguments for above callback.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

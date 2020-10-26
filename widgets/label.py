@@ -12,6 +12,8 @@ class Label(NoTouch):
             if value is None:
                 raise ValueError('If label value unspecified, must define the width')
             width, _ = TFT.get_stringsize(value, font) 
+            if border is not None:
+                width += 2 * border
         super().__init__(location, font, None, width, fgcolor, bgcolor, fontcolor, border, value, None)
         self.height = self.font.height()
         self.height += 2 * self.border  # Height determined by font and border
