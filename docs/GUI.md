@@ -67,7 +67,7 @@ An extension for plotting simple graphs is provided and is described
   6.6 [Class Checkbox](./GUI.md#66-class-checkbox)  
   6.7 [Class Listbox](./GUI.md#67-class-listbox)  
   6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
-  6.9 [Class Pad](./README.md#69-class-pad) Invisible touch sensitive region.  
+  6.9 [Class Pad](./GUI.md#69-class-pad) Invisible touch sensitive region.  
 7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
