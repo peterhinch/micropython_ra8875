@@ -9,6 +9,7 @@ from micropython_ra8875.py.colors import *
 from micropython_ra8875.widgets.buttons import Button, ButtonList, RadioButtons
 from micropython_ra8875.widgets.checkbox import Checkbox
 from micropython_ra8875.widgets.label import Label
+from micropython_ra8875.widgets.pad import Pad
 
 from micropython_ra8875.fonts import font10, font14
 from micropython_ra8875.driver.tft_local import setup
@@ -73,6 +74,13 @@ class ButtonScreen(Screen):
             self.lst_en_dis.append(Button((x, 60), fgcolor = CYAN, shape = CIRCLE, fontcolor = BLACK,
                    litcolor = WHITE, font = font14, callback = self.callback, **t))
             x += 70
+# Pad
+        lbl_pad = Label((0, 200), value = 'touch me', fontcolor = WHITE, border = 2,
+                        fgcolor = RED, bgcolor = DARKGREEN, font = font14)
+        pad = Pad((0, 200), width = lbl_pad.width, height = lbl_pad.height, onrelease = False,
+                  callback = lambda _: lbl_pad.value('Short'),
+                  lp_callback = lambda _: lbl_pad.value('Long'))
+        self.lst_en_dis.append(pad)
 
 # Start/Stop toggle
         self.bs = ButtonList(self.callback)
@@ -99,7 +107,7 @@ class ButtonScreen(Screen):
         self.cb2 = Checkbox((340, 40), fillcolor = RED, callback = self.cbcb, args = (1,))
         self.lst_en_dis.extend([self.cb1, self.cb2])
 # Reset button
-        self.lbl_reset = Label((200, 220), font = font10, value = 'Reset also responds to long press')
+        self.lbl_reset = Label((200, 210), font = font10, value = 'Reset also responds to long press')
         self.btn_reset = Button((300, 240), font = font14, height = 30, width = 80,
                                 fgcolor = BLUE, shape = RECTANGLE, text = 'Reset', fill = True,
                                 callback = self.cbreset, args = (4,), onrelease = False,
