@@ -41,6 +41,15 @@ Vectors (as a `complex`) may be shown in "compass" or "clock" styles. Length
 and angle change as the vector alters. The color of any vector can be changed
 dynamically in uer code.
 
+# Scale
+
+![Scale](./scale.JPG)
+
+The `Scale` control can accurately display variables having a wide range of
+values. The scale moves within a window so that the current value aligns with
+the fixed pointer. The scale color can change dynamically (in the lower
+instance).
+
 # Modal Dialog Box
 
 ![Dialog box](./dialog.JPG)
