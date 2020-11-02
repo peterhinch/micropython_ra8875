@@ -58,6 +58,7 @@ An extension for plotting simple graphs is provided and is described
   5.4 [Class LED](./GUI.md#54-class-led)  
   5.5 [Class Meter](./GUI.md#55-class-meter)  
   5.6 [Vector display](./GUI.md#56-vector-display)  
+  5.7 [Scale class](./GUI.md#56-scale-class) Linear display with wide dynamic range.  
 6. [Control Classes](./GUI.md#6-control-classes)  
   6.1 [Class Button](./GUI.md#61-class-button)  
   6.2 [Class ButtonList: emulate a button with multiple states](./GUI.md#62-class-buttonlist-emulate-a-button-with-multiple-states)  
@@ -190,7 +191,11 @@ Demos for 480x272 displays (will run on 800x480).
  9. `vtest.py` Uses `VectorDial` instances for analog clock and compass style
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
-Demos for 800x480 displays only.
+ 11. `scaletest.py` Demo of `Scale` object. This is capable of displaying
+ floats to a high degree of accuracy.
+
+Demos for 800x480 displays only. These give a flavour of implementing complex
+projects.
  1. `audio.py` A control panel for a HiFi system with simulated audio.
  2. `kbd.py` A qwerty keyboard feeding a textbox.
  3. `tty.py` A very basic terminal for accessing another MicroPython target's
@@ -683,6 +688,90 @@ Method:
  is passed as the value `v` it is scaled to ensure its magnitude is <= 1 and
  the pointer is redrawn. If a color is passed as `col` the pointer's color is
  updated.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 5.6 Scale class
+
+This displays floating point data having a wide dynamic range. It is modelled
+on old radios where a large scale scrolls past a small window having a fixed
+pointer. This enables a scale with (say) 200 graduations (ticks) to readily be
+visible on a small display, with sufficient resolution to enable the user to
+interpolate between ticks. Default settings enable estimation of a value to
+within +-0.1%.
+
+Legends for the scale are created dynamically as it scrolls past the window.
+The user may control this by means of a callback. The example `lscale.py`
+illustrates a variable with range 88.0 to 108.0, the callback ensuring that the
+display legends match the user variable. A further callback enables the scale's
+color to change over its length or in response to other circumstances.
+
+The scale displays floats in range -1.0 <= V <= 1.0.
+
+Constructor mandatory positional arguments:
+ 1. `location` 2-tuple defining position.
+ 2. `font` Font for labels.
+
+Keyword only arguments (all optional): 
+ * `ticks=200` Number of "tick" divisions on scale. Must be divisible by 2.
+ * `legendcb=None` Callback for populating scale legends (see below).
+ * `tickcb=None` Callback for setting tick colors (see below).
+ * `height=60` Pass 0 for a minimum height based on the font height.
+ * `width=300`
+ * `border=2` Border width in pixels.
+ * `fgcolor=None` Foreground color. Defaults to system color.
+ * `bgcolor=None` Background color defaults to system background.
+ * `pointercolor=None` Color of pointer. Defaults to `.fgcolor`.
+ * `fontcolor=None` Color of legends. Default `WHITE`.
+ * `value=0.0` Initial value.
+
+Method:
+ * `value=None` Set or get the current value. Always returns the current value.
+ A passed `float` is constrained to the range -1.0 <= V <= 1.0 and becomes the
+ `Scale`'s current value. The `Scale` is updated. Passing `None` enables
+ reading the current value.
+
+### Callback legendcb
+
+The display window contains 20 ticks comprising two divisions; by default a
+division covers a range of 0.1. A division has a legend at the start and end
+whose text is defined by the `legendcb` callback. If no user callback is
+supplied, legends will be of the form `0.3`, `0.4` etc. User code may override
+these to cope with cases where a user variable is mapped onto the control's
+range. The callback takes a single `float` arg which is the value of the tick
+(in range -1.0 <= v <= 1.0). It must return a text string. An example from the
+`lscale.py` demo shows FM radio frequencies:
+```python
+def legendcb(f):
+    return '{:2.0f}'.format(88 + ((f + 1) / 2) * (108 - 88))
+```
+The above arithmetic aims to show the logic. It can be simplified.
+
+### Callback tickcb
+
+This callback enables the tick color to be changed dynamically. For example a
+scale might change from green to orange, then to red as it nears the extremes.
+The callback takes two args, being the value of the tick (in range 
+-1.0 <= v <= 1.0) and the default color. It must return a color. This example
+is taken from the `lscale.py` demo:
+```python
+def tickcb(f, c):
+    if f > 0.8:
+        return RED
+    if f < -0.8:
+        return BLUE
+    return c
+```
+
+### increasing the ticks value
+
+This increases the precision of the display.
+
+It does this by lengthening the scale while keeping the window the same size,
+with 20 ticks displayed. If the scale becomes 10x longer, the value diference
+between consecutive large ticks and legends is divided by 10. This means that
+the `tickcb` callback must return a string having an additional significant
+digit. If this is not done, consecutive legends will have the same value.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
