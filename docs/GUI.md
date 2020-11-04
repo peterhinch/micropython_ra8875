@@ -1,5 +1,6 @@
 # RA8875 GUI
 
+v0.20 4th Nov 2020 Add Pad and Scale widgets.
 V0.19 Beta 13th June 2020 Supports (and requires) uasyncio V3.
 V0.18 Beta 1st September 2019.
 
