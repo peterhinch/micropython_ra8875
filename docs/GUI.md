@@ -55,7 +55,7 @@ An extension for plotting simple graphs is provided and is described
 5. [Display Classes](./GUI.md#5-display-classes)  
   5.1 [Class Label](./GUI.md#51-class-label)  
   5.2 [Class Textbox](./GUI.md#52-class-textbox)  
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.2.1 [Note on tabs](./gui.md#521-note-on-tabs)  
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.2.1 [Note on tabs](./GUI.md#521-note-on-tabs)  
   5.3 [Class Dial](./GUI.md#53-class-dial)  
   5.4 [Class LED](./GUI.md#54-class-led)  
   5.5 [Class Meter](./GUI.md#55-class-meter)  
