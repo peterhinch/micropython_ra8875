@@ -55,6 +55,7 @@ An extension for plotting simple graphs is provided and is described
 5. [Display Classes](./GUI.md#5-display-classes)  
   5.1 [Class Label](./GUI.md#51-class-label)  
   5.2 [Class Textbox](./GUI.md#52-class-textbox)  
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.2.1 [Note on tabs](./gui.md#521-note-on-tabs)  
   5.3 [Class Dial](./GUI.md#53-class-dial)  
   5.4 [Class LED](./GUI.md#54-class-led)  
   5.5 [Class Meter](./GUI.md#55-class-meter)  
@@ -494,11 +495,14 @@ Method:
 
 Displays multiple lines of text in a field of fixed dimensions. Text may be
 clipped to the width of the control or may be word-wrapped. If the number of
-lines of text exceeds the height available, scrolling may be performed, either
-by calling a method or by touching the control.
+lines of text exceeds the height available, scrolling will occur. Access to
+text that has scrolled out of view may be achieved by touching the control or
+by calling a method.
 
 Works with fixed and variable pitch fonts. Tab characters are supported for
-Python fonts (not for the RA8875 internal font).
+Python fonts (not for the RA8875 internal font): see 
+[Note on tabs](./GUI.md#521-note-on-tabs).
+
 ```python
 from micropython_ra8875.py.ugui.widgets.textbox import Textbox
 ```
@@ -524,7 +528,7 @@ Keyword only arguments:
  * `repeat=True` Controls the behaviour of touch-based scrolling. By default
  a long press causes repeated scrolling. `False` requires a discrete press for
  each line movement.
- * `tab=32` Tab space in pixels.
+ * `tab=32` Tab space in pixels: see [Note on tabs](./GUI.md#521-note-on-tabs)..
 
 Methods:
  * `append` Args `s, ntrim=None, line=None` Append the string `s` to the
@@ -544,6 +548,13 @@ Fast updates:
 Rendering text to the screen is relatively slow. To send a large amount of text
 the fastest way is to perform a single `append`. Text may contain newline
 (`'\n'`) characters as required. In that way rendering occurs once only.
+
+### 5.2.1 Note on tabs
+
+The purpose of tab characters is to align columns of text when using variable
+pitch fonts. With fixed pitch fonts (such as internal fonts) they serve no
+purpose which cannot be achieved by the Python `format` command. Hence they are
+unsupported for internal fonts whose rendering prioritises speed.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
