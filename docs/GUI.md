@@ -71,6 +71,7 @@ An extension for plotting simple graphs is provided and is described
   6.7 [Class Listbox](./GUI.md#67-class-listbox)  
   6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
   6.9 [Class Pad](./GUI.md#69-class-pad) Invisible touch sensitive region.  
+  6.10 [Class ScaleCtrl](./GUI.md#610-class-scalectrl) Input floating point values to high precision.  
 7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
@@ -1199,6 +1200,117 @@ Method:
  * `greyed_out` Optional boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it - there is no visible effect.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 6.10 Class ScaleCtrl
+
+This enables the input of floating point values with higher precision than the
+slider widgets. It is based on the `Scale` class. Touching the control causes
+its value to change at a constant rate, with rate and direction proportional to
+the horizontal distance from the control centre of the touch. Change stops when
+the touch ceases.
+
+This allows the input of floating point data having a wide dynamic range. It is
+modelled on old radios where a large scale scrolls past a small window having a
+fixed pointer. This enables a scale with (say) 200 graduations (ticks) to
+readily be visible on a small display, with sufficient resolution to enable the
+user to interpolate between ticks. Default settings enable input of a value to
+within +-0.1%.
+
+Legends for the scale are created dynamically as it scrolls past the window.
+The user may control this by means of a callback. The example `lscale.py`
+illustrates a variable with range 88.0 to 108.0, the callback ensuring that the
+display legends match the user variable. A further callback enables the scale's
+color to change over its length or in response to other circumstances.
+
+The scale displays floats in range -1.0 <= V <= 1.0.
+
+Constructor mandatory positional arguments:
+ 1. `location` 2-tuple defining position.
+ 2. `font` Font for labels.
+
+Keyword only arguments (all optional): 
+ * `ticks=200` Number of "tick" divisions on scale. Must be divisible by 2.
+ * `legendcb=None` Callback for populating scale legends (see below).
+ * `tickcb=None` Callback for setting tick colors (see below).
+ * `height=60` Pass 0 for a minimum height based on the font height.
+ * `width=300`
+ * `border=2` Border width in pixels.
+ * `fgcolor=None` Foreground color. Defaults to system color.
+ * `bgcolor=None` Background color defaults to system background.
+ * `pointercolor=None` Color of pointer. Defaults to `.fgcolor`.
+ * `fontcolor=None` Color of legends. Default `WHITE`.
+ * `value=0.0` Initial value. By default the scale will start centred.
+ * `cb_end=dolittle` Callback function which will run when the user stops
+ touching the control. Default is a null function.
+ * `cbe_args=[]` A list/tuple of arguments for above callback.
+ * `cb_move=dolittle` Callback function which will run when the user moves the
+ scale or the value is changed programmatically. Default is a null function.
+ * `cbm_args=[]` A list/tuple of arguments for above callback.
+ * `ttime=5` Determines the rate at which the value changes when the
+ control is touched. The rate is reduced by a factor of 10 when close to the
+ centre of the control to facilitate fine control. Represents the approximate
+ minimum time in seconds to traverse from a central point to one end of the
+ scale.
+
+Methods:
+ * `value=None` Set or get the current value. Always returns the current value.
+ A passed `float` is constrained to the range -1.0 <= V <= 1.0 and becomes the
+ `ScaleCtrl`'s current value. The `ScaleCtrl` is updated. Always returns the
+ control's current value.
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
+ `None` returns the current 'greyed out' status of the control. Otherwise
+ enables or disables it, showing it in its new state.
+
+### Callbacks cb_move and cb_end 
+
+These receive an initial arg being the control instance followed by any user
+supplied args. They can be a bound methods, typically of a `Screen` subclass.
+`cb_move` runs when the value changes but before the update is processed,
+enabling dynamic color change.
+
+### Callback legendcb
+
+The display window contains 20 ticks comprising two divisions; by default a
+division covers a range of 0.1. A division has a legend at the start and end
+whose text is defined by the `legendcb` callback. If no user callback is
+supplied, legends will be of the form `0.3`, `0.4` etc. User code may override
+these to cope with cases where a user variable is mapped onto the control's
+range. The callback takes a single `float` arg which is the value of the tick
+(in range -1.0 <= v <= 1.0). It must return a text string. An example from the
+`lscale.py` demo shows FM radio frequencies:
+```python
+def legendcb(f):
+    return '{:2.0f}'.format(88 + ((f + 1) / 2) * (108 - 88))
+```
+The above arithmetic aims to show the logic. It can be simplified.
+
+### Callback tickcb
+
+This callback enables the tick color to be changed dynamically. For example a
+scale might change from green to orange, then to red as it nears the extremes.
+The callback takes two args, being the value of the tick (in range 
+-1.0 <= v <= 1.0) and the default color. It must return a color. This example
+is taken from the `lscale.py` demo:
+```python
+def tickcb(f, c):
+    if f > 0.8:
+        return RED
+    if f < -0.8:
+        return BLUE
+    return c
+```
+
+### increasing the ticks value
+
+This increases the precision of the display.
+
+It does this by lengthening the scale while keeping the window the same size,
+with 20 ticks displayed. If the scale becomes 10x longer, the value diference
+between consecutive large ticks and legends is divided by 10. This means that
+the `tickcb` callback must return a string having an additional significant
+digit. If this is not done, consecutive legends will have the same value.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

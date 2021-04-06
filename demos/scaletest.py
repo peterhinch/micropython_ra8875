@@ -1,4 +1,4 @@
-# lscale.py Test/demo of scale widget for Pybboard LCD160CR GUI
+# scaletest.py Test/demo of scale widget for Pybboard RA8875 GUI
 
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2020 Peter Hinch
