@@ -195,7 +195,9 @@ Demos for 480x272 displays (will run on 800x480).
  displays.
  10. `tbox.py` Demo of the `Textbox` control.
  11. `scaletest.py` Demo of `Scale` object. This is capable of displaying
- floats to a high degree of accuracy.
+ numbers to a high degree of precision.
+ 12. `scale_ctrl_test.py` Demo of `ScaleCtrl` object capable of touch entry of
+ numbers to a high degree of precision.
 
 Demos for 800x480 displays only. These give a flavour of implementing complex
 projects.
