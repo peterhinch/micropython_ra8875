@@ -7,9 +7,9 @@
 # Usage:
 # from micropython_ra8875.widgets.scale_ctrl import ScaleCtrl
 
-# TODO Figure out callbacks cb_move and cb_end. Fix test script.
 
 import uasyncio as asyncio
+from time import ticks_ms, ticks_diff
 from micropython_ra8875.py.ugui import Touchable
 from micropython_ra8875.driver.constants import SYS_BGCOLOR
 
@@ -22,7 +22,7 @@ class ScaleCtrl(Touchable):
                  height=60, width=300, border=2, fgcolor=None, bgcolor=None,
                  pointercolor=None, fontcolor=None, 
                  cb_end=dolittle, cbe_args=[], cb_move=dolittle, cbm_args=[],
-                 value=0.0, ttime=5):
+                 value=0.0):
         if ticks % 2:
             raise ValueError('ticks arg must be divisible by 2')
         # For correct text rendering inside control must explicitly set bgcolor
@@ -62,10 +62,14 @@ class ScaleCtrl(Touchable):
         self.ldy0 = ycl - self.ldl // 2
         # Bound variables for touch
         self.touch = asyncio.Event()
-        self.dv_dt = 0
-        self.itime = 200  # ms per increment
-        self.rate = self.itime /(100_000 * ttime)
-        asyncio.create_task(self.monitor())
+        self.distance = 0  # Touch distance normalised to -100 <= d <= 100
+        self.set_touch()
+        asyncio.create_task(self._monitor())
+
+    # itime=time per increment in ms.
+    def set_touch(self, itime=200, rmul=1.0):
+        self.itime = itime  # ms per increment
+        self.rmul = rmul
 
     def show(self):
         tft = self.tft
@@ -137,23 +141,35 @@ class ScaleCtrl(Touchable):
                 self._value_change(show)
         return self._fvalue(self._value)
 
-    async def monitor(self):
+    async def _monitor(self):
         while True:
-            if self.dv_dt == 0:
+            if self.distance == 0:
                 await self.touch.wait()  # Suspend until touched
-            dv_dt = self.dv_dt  # -100 <= dv_dt <= 100
-            if dv_dt != 0:
+                start = ticks_ms()
+            distance = self.distance  # -100 <= distance <= 100
+            if distance != 0:
+                dirn = 1 if distance > 0 else -1  # Direction
+                dv = 5e-5 * dirn * (ticks_diff(ticks_ms(), start) + 100)
                 # Allow fine control near centre
-                dv = dv_dt * self.rate if abs(dv_dt) > 50 else dv_dt * self.rate / 10
+                ad = abs(distance)
+                if ad < 50:
+                    dv *= 0.01 * ad * self.rmul
+
+                #if abs(distance) < 50:
+                    #dv = 5e-4 * dirn
+                #else:
+                    #dv = 5e-5 * dirn * (ticks_diff(ticks_ms(), start) + 100)
+                #dv = distance * self.rate if abs(distance) > 50 else distance * self.rate / 10
                 self.value(self.value() + dv)
             await asyncio.sleep_ms(self.itime)
             
-    def _touched(self, x, y): # Touched in bounding box. A drag will call repeatedly.
-        # -100 <= .dv_dt <= 100 Specify rate of change as integer for zero detection
-        self.dv_dt = int(200 * (x - self.x0 - self.width // 2) / self.width)
+    # Touched in bounding box. A long press will call repeatedly.
+    def _touched(self, x, y):
+        # -100 <= .distance <= 100 Distance is integer for zero detection
+        self.distance = 200 * (x - self.x0 - self.width // 2) // self.width
         self.touch.set()
 
     def _untouched(self):
         super()._untouched()
         self.touch.clear()
-        self.dv_dt = 0
+        self.distance = 0

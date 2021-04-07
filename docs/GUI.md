@@ -1207,11 +1207,15 @@ Method:
 
 ## 6.10 Class ScaleCtrl
 
+###### Under development.
+
+`set_touch` method and touch algorithm may change. The rest of the API should
+be stable.
+
 This enables the input of floating point values with higher precision than the
 slider widgets. It is based on the `Scale` class. Touching the control causes
-its value to change at a constant rate, with rate and direction proportional to
-the horizontal distance from the control centre of the touch. Change stops when
-the touch ceases.
+its value to change. The direction and rate of change varies with horizontal
+distance from the control centre. Change stops when touch ceases.
 
 This allows the input of floating point data having a wide dynamic range. It is
 modelled on old radios where a large scale scrolls past a small window having a
@@ -1250,11 +1254,6 @@ Keyword only arguments (all optional):
  * `cb_move=dolittle` Callback function which will run when the user moves the
  scale or the value is changed programmatically. Default is a null function.
  * `cbm_args=[]` A list/tuple of arguments for above callback.
- * `ttime=5` Determines the rate at which the value changes when the
- control is touched. The rate is reduced by a factor of 10 when close to the
- centre of the control to facilitate fine control. Represents the approximate
- minimum time in seconds to traverse from a central point to one end of the
- scale.
 
 Methods:
  * `value=None` Set or get the current value. Always returns the current value.
@@ -1264,6 +1263,21 @@ Methods:
  * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
+ * `set_touch(itime=200, rmul=1.0)` This method allows the timing of touch
+ detection to be modified. Time is in ms. The defaults are the values used if
+ this method is never called. The `itime` arg defines the time each value
+ change is displayed. The `rmul` arg affects the precision of changes when
+ touched near the centre. If the `ticks` value is increased to increase the
+ control's precision, this may need to be reduced in proportion. I haven't
+ experimented with this.
+
+### Touch algorithm
+
+A touch near either end of the control causes an accelerating change to the
+value. Thus a long touch can rapidly move the control with a short one giving
+smaller changes. A touch near to the centre of the control gives rise to a
+more gently accelerating change, with change being slower nearer the centre
+marker. This enables high precision adjustment.
 
 ### Callbacks cb_move and cb_end 
 
