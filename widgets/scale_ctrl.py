@@ -72,6 +72,7 @@ class ScaleCtrl(Touchable):
         self.rmul = rmul
 
     def show(self):
+        #start = ticks_ms()
         tft = self.tft
         x0: int = self.x0  # Internal rectangle occupied by scale and text
         x1: int = self.x1
@@ -125,11 +126,12 @@ class ScaleCtrl(Touchable):
             iv += 1
 
         tft.draw_vline(x0 + (x1 - x0) // 2, y0, y1 - y0, self.ptrcolor) # Draw pointer
+        #print(ticks_diff(ticks_ms(), start))  65 or 83ms on Pyboard D dependent on callbacks
 
     def _to_int(self, v):
         return round((v + 1.0) * self.ticks * 5)  # 0..self.ticks*10
 
-    def _fvalue(self, v=None):
+    def _fvalue(self, v):
         return v / (5 * self.ticks) - 1.0
 
     def value(self, val=None, show=True): # User method to get or set value
@@ -154,12 +156,8 @@ class ScaleCtrl(Touchable):
                 ad = abs(distance)
                 if ad < 50:
                     dv *= 0.01 * ad * self.rmul
-
-                #if abs(distance) < 50:
-                    #dv = 5e-4 * dirn
-                #else:
-                    #dv = 5e-5 * dirn * (ticks_diff(ticks_ms(), start) + 100)
-                #dv = distance * self.rate if abs(distance) > 50 else distance * self.rate / 10
+                # value change needs to be done using floats. An integer
+                # attempt did not cope well with subtle, small changes
                 self.value(self.value() + dv)
             await asyncio.sleep_ms(self.itime)
             
