@@ -751,7 +751,7 @@ Method:
  * `value=None` Set or get the current value. Always returns the current value.
  A passed `float` is constrained to the range -1.0 <= V <= 1.0 and becomes the
  `Scale`'s current value. The `Scale` is updated. Passing `None` enables
- reading the current value.
+ reading the current value, but see note below on precision.
 
 ### Callback legendcb
 
@@ -794,6 +794,12 @@ with 20 ticks displayed. If the scale becomes 10x longer, the value diference
 between consecutive large ticks and legends is divided by 10. This means that
 the `tickcb` callback must return a string having an additional significant
 digit. If this is not done, consecutive legends will have the same value.
+
+### Precision
+
+For performance reasons the control stores values as integers. This means that
+if you set `value` and subsequently retrieve it, there may be some loss of
+precision. Each visible division on the control represents 10 integer units.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
@@ -1250,25 +1256,29 @@ Keyword only arguments (all optional):
  * `value=0.0` Initial value. By default the scale will start centred.
  * `cb_end=dolittle` Callback function which will run when the user stops
  touching the control. Default is a null function.
- * `cbe_args=[]` A list/tuple of arguments for above callback.
+ * `cbe_args=[]` A list/tuple of arguments for above callback.  The callback's
+ arguments are the `ScaleCtrl` instance, followed by any user supplied args.
  * `cb_move=dolittle` Callback function which will run when the user moves the
  scale or the value is changed programmatically. Default is a null function.
- * `cbm_args=[]` A list/tuple of arguments for above callback.
+ * `cbm_args=[]` A list/tuple of arguments for above callback. The callback's
+ arguments are the `ScaleCtrl` instance, followed by any user supplied args.
 
 Methods:
  * `value=None` Set or get the current value. Always returns the current value.
  A passed `float` is constrained to the range -1.0 <= V <= 1.0 and becomes the
  `ScaleCtrl`'s current value. The `ScaleCtrl` is updated. Always returns the
- control's current value.
+ control's current value. See note below on precision.
  * `greyed_out` Optional Boolean argument `val` default `None`. If
  `None` returns the current 'greyed out' status of the control. Otherwise
  enables or disables it, showing it in its new state.
- * `set_touch(itime=200, rmul=1.0)` This method allows the timing of touch
- detection to be modified. Time is in ms. The defaults are the values used if
- this method is never called. The `itime` arg defines the time each value
- change is displayed. The `rmul` arg affects the precision of changes when
- touched near the centre. If the `ticks` value is increased to increase the
- control's precision, this may need to be reduced in proportion. I haven't
+ * `set_touch(itime=200, fspeed=11, sspeed=7)` This method allows the timing of
+ touch detection to be modified. The defaults are the values used if this
+ method is never called. The `itime` arg is the time (in ms) for which each
+ value change is displayed. The `fspeed` arg affects the rate of movement when
+ touched near the ends of the control, `sspeed` when touched near to the
+ centre. Control is logarithmic: adding one to a speed value will halve the
+ rate of movement. If the `ticks` value is increased to increase the control's
+ precision, `sspeed` may need to be reduced in proportion. I haven't
  experimented with this.
 
 ### Touch algorithm
@@ -1327,6 +1337,12 @@ with 20 ticks displayed. If the scale becomes 10x longer, the value diference
 between consecutive large ticks and legends is divided by 10. This means that
 the `tickcb` callback must return a string having an additional significant
 digit. If this is not done, consecutive legends will have the same value.
+
+### Precision
+
+For performance reasons the control stores values as integers. This means that
+if you set `value` and subsequently retrieve it, there may be some loss of
+precision. Each visible division on the control represents 100 integer units.
 
 ###### [Jump to Contents](./GUI.md#contents)
 

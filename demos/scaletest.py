@@ -7,7 +7,6 @@
 # import micropython_ra8875.demos.scaletest
 
 import uasyncio as asyncio
-from micropython_ra8875.driver.constants import *
 from micropython_ra8875.py.colors import *
 from micropython_ra8875.py.ugui import Screen
 from micropython_ra8875.fonts import font10, font14

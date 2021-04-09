@@ -67,12 +67,13 @@ class ScaleCtrl(Touchable):
         asyncio.create_task(self._monitor())
 
     # itime=time per increment in ms.
-    def set_touch(self, itime=200, rmul=1.0):
+    def set_touch(self, itime=200, fspeed=11, sspeed=7):
         self.itime = itime  # ms per increment
-        self.rmul = rmul
+        self.fspeed = fspeed
+        self.sspeed = sspeed
 
     def show(self):
-        #start = ticks_ms()
+        # start = ticks_ms()
         tft = self.tft
         x0: int = self.x0  # Internal rectangle occupied by scale and text
         x1: int = self.x1
@@ -81,32 +82,32 @@ class ScaleCtrl(Touchable):
         tft.fill_rectangle(x0, y0, x1, y1, self.bgcolor)
         if self._value is None:  # Initial show
             self.value(self._initial_value, show = False) # Prevent recursion
-        # Scale is drawn using ints. Each division is 10 units.
-        val: int = self._value  # 0..ticks*10
+        # Scale is drawn using ints. Each division is 100 units.
+        val: int = self._value  # 0..ticks*100
         # iv increments for each tick. Its value modulo N determines tick length
-        iv: int  # val / 10 at a tick position
-        d: int  # val % 10: offset relative to a tick position
+        iv: int  # val / 100 at a tick position
+        d: int  # val % 100: offset relative to a tick position
         fx: int  # X offset of current tick in value units 
-        if val >= 100:  # Whole LHS of scale will be drawn
-            iv, d = divmod(val - 100, 10)  # Initial value
-            fx = 10 - d
+        if val >= 1000:  # Whole LHS of scale will be drawn
+            iv, d = divmod(val - 1000, 100)  # Initial value
+            fx = 100 - d
             iv += 1
         else:  # Scale will scroll right
             iv = 0
-            fx = 100 - val
+            fx = 1000 - val
 
         # Window shows 20 divisions, each of which corresponds to 10 units of value.
         # So pixels per unit value == win_width/200
         win_width: int = x1 - x0
         ticks: int = self.ticks  # Total # of ticks visible and hidden
         while True:
-            x: int = x0 + (fx * win_width) // 200  # Current X position
+            x: int = x0 + (fx * win_width) // 2000  # Current X position
             ys: int  # Start Y position for tick
             yl: int  # tick length
             if x > x1 or iv > ticks:  # Out of space or data (scroll left)
                 break
             if not iv % 10:
-                txt = self.legendcb(self._fvalue(iv * 10))
+                txt = self.legendcb(self._fvalue(iv * 100))
                 tlen, _ = tft.get_stringsize(txt, self.font)
                 tft.print_left(min(x, x1 - tlen), y0, txt, self.text_style)
                 ys = self.ldy0  # Large tick
@@ -120,54 +121,58 @@ class ScaleCtrl(Touchable):
             if self.tickcb is None:
                 color = self.fgcolor
             else:
-                color = self.tickcb(self._fvalue(iv * 10), self.fgcolor)
+                color = self.tickcb(self._fvalue(iv * 100), self.fgcolor)
             tft.draw_vline(x, ys, yl, color)  # Draw tick
-            fx += 10
+            fx += 100
             iv += 1
 
         tft.draw_vline(x0 + (x1 - x0) // 2, y0, y1 - y0, self.ptrcolor) # Draw pointer
-        #print(ticks_diff(ticks_ms(), start))  65 or 83ms on Pyboard D dependent on callbacks
-
-    def _to_int(self, v):
-        return round((v + 1.0) * self.ticks * 5)  # 0..self.ticks*10
+        # print(ticks_diff(ticks_ms(), start))  #65 or 83ms on Pyboard D dependent on callbacks
 
     def _fvalue(self, v):
-        return v / (5 * self.ticks) - 1.0
+        return v / (50 * self.ticks) - 1.0
 
     def value(self, val=None, show=True): # User method to get or set value
         if val is not None:
             val = min(max(val, - 1.0), 1.0)
-            v = self._to_int(val)
+            v: int = round((val + 1.0) * self.ticks * 50)  # 0..self.ticks*100
             if self._value is None or v != self._value:
                 self._value = v
                 self._value_change(show)
         return self._fvalue(self._value)
 
+    # Process touches. Integer processing for performance on platforms with no
+    # FPU, also to reduce allocation.
     async def _monitor(self):
+        sspeed: int = self.sspeed
+        fspeed: int = self.fspeed
         while True:
+            self.distance: int
             if self.distance == 0:
                 await self.touch.wait()  # Suspend until touched
-                start = ticks_ms()
-            distance = self.distance  # -100 <= distance <= 100
+                start: int = ticks_ms()
+            distance: int = self.distance  # -100 <= distance <= 100
             if distance != 0:
-                dirn = 1 if distance > 0 else -1  # Direction
-                dv = 5e-5 * dirn * (ticks_diff(ticks_ms(), start) + 100)
+                dirn: int = 1 if distance > 0 else -1  # Direction
+                dv: int = dirn * ticks_diff(ticks_ms(), start)
                 # Allow fine control near centre
-                ad = abs(distance)
+                ad: int = abs(distance)
                 if ad < 50:
-                    dv *= 0.01 * ad * self.rmul
-                # value change needs to be done using floats. An integer
-                # attempt did not cope well with subtle, small changes
-                self.value(self.value() + dv)
+                    dv = (dv * ad) >> sspeed
+                # Transit time independent of .ticks
+                dv = (dv * self.ticks) >> fspeed
+                self._value += dv
+                self._value = min(max(self._value, 0), 100 * self.ticks)
+                self._value_change(True)  # Show
             await asyncio.sleep_ms(self.itime)
             
     # Touched in bounding box. A long press will call repeatedly.
     def _touched(self, x, y):
         # -100 <= .distance <= 100 Distance is integer for zero detection
-        self.distance = 200 * (x - self.x0 - self.width // 2) // self.width
+        self.distance: int = 200 * (x - self.x0 - self.width // 2) // self.width
         self.touch.set()
 
     def _untouched(self):
         super()._untouched()
         self.touch.clear()
-        self.distance = 0
+        self.distance: int = 0
