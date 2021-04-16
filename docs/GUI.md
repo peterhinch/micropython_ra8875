@@ -1392,7 +1392,7 @@ Keyword only arguments (all optional):
 
 Methods:
  * `value=None` Set or get the current value. Always returns the current value.
- A passed `float` is constrained to the range 1.0 <= V <= 10**decades and
+ A passed `float` is constrained to the range `1.0 <= V <= 10**decades` and
  becomes the control's current value. The `ScaleLog` is updated. Always returns
  the control's current value. See note below on precision.
  * `greyed_out` Optional Boolean argument `val` default `None`. If
