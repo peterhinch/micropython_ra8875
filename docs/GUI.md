@@ -1,8 +1,8 @@
 # RA8875 GUI
 
-v0.20 4th Nov 2020 Add Pad and Scale widgets.
-V0.19 Beta 13th June 2020 Supports (and requires) uasyncio V3.
-V0.18 Beta 1st September 2019.
+V0.21 16th April 2021 Add ScaleCtrl and ScaleLog widgets.  
+V0.20 4th Nov 2020 Add Pad and Scale widgets.  
+V0.19 Beta 13th June 2020 Supports (and requires) uasyncio V3.  
 
 This is a simple event driven touch GUI interface for MicroPython targets used
 with RA8875 based colour displays. It uses `uasyncio` for scheduling. It has
@@ -72,7 +72,7 @@ An extension for plotting simple graphs is provided and is described
   6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
   6.9 [Class Pad](./GUI.md#69-class-pad) Invisible touch sensitive region.  
   6.10 [Class ScaleCtrl](./GUI.md#610-class-scalectrl) Input floating point values to high precision.  
-  6.11 [Class ScaleLog](./GUI.md#610-class-scalectrl) Input floating point values with wide dynamic range.  
+  6.11 [Class ScaleLog](./GUI.md#611-class-scalelog) Input floating point values with wide dynamic range.  
 7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
@@ -1359,10 +1359,10 @@ callback, for example to display units, e.g. `10nF`. A further callback
 enables the scale's color to change over its length or in response to other
 circumstances.
 
-The scale displays floats in range 1.0 <= V <= 10**decades where `decades` is a
-constructor arg. The user may readily scale these so that a control having a
+The scale displays floats in range `1.0 <= V <= 10**decades` where `decades` is
+a constructor arg. The user may readily scale these so that a control having a
 range of 1-10,000 controls a user value from 1e-6 to 1e-2 while displaying
-ticks labelled 1μs, 10μs, 100μs, 1ms, 10ms and 100ms.
+ticks labelled 1μs, 10μs, 100μs, 1ms and 10ms.
 
 Constructor mandatory positional arguments:
  1. `location` 2-tuple defining position.
