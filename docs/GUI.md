@@ -72,6 +72,7 @@ An extension for plotting simple graphs is provided and is described
   6.8 [Class Dropdown](./GUI.md#68-class-dropdown)  
   6.9 [Class Pad](./GUI.md#69-class-pad) Invisible touch sensitive region.  
   6.10 [Class ScaleCtrl](./GUI.md#610-class-scalectrl) Input floating point values to high precision.  
+  6.11 [Class ScaleLog](./GUI.md#610-class-scalectrl) Input floating point values with wide dynamic range.  
 7. [Dialog Boxes](./GUI.md#7-dialog-boxes)  
   7.1 [Class Aperture](./GUI.md#71-class-aperture)  
   7.2 [Class DialogBox](./GUI.md#72-class-dialogbox)  
@@ -1213,11 +1214,6 @@ Method:
 
 ## 6.10 Class ScaleCtrl
 
-###### Under development.
-
-`set_touch` method and touch algorithm may change. The rest of the API should
-be stable.
-
 This enables the input of floating point values with higher precision than the
 slider widgets. It is based on the `Scale` class. Touching the control causes
 its value to change. The direction and rate of change varies with horizontal
@@ -1286,8 +1282,7 @@ Methods:
 A touch near either end of the control causes an accelerating change to the
 value. Thus a long touch can rapidly move the control with a short one giving
 smaller changes. A touch near to the centre of the control gives rise to a
-more gently accelerating change, with change being slower nearer the centre
-marker. This enables high precision adjustment.
+more gently accelerating change. This enables high precision adjustment.
 
 ### Callbacks cb_move and cb_end 
 
@@ -1343,6 +1338,123 @@ digit. If this is not done, consecutive legends will have the same value.
 For performance reasons the control stores values as integers. This means that
 if you set `value` and subsequently retrieve it, there may be some loss of
 precision. Each visible division on the control represents 100 integer units.
+
+###### [Jump to Contents](./GUI.md#contents)
+
+## 6.11 Class ScaleLog
+
+This enables the input and/or display of floating point values with extremely
+wide dynamic range. This is done by means of a base 10 logarithmic scale. In
+other respects the concept is that of the `Scale` class. Touching the control
+causes its value to change. The direction and rate of change varies with
+horizontal distance from the control centre. Change stops when touch ceases.
+
+The control is modelled on old radios where a large scale scrolls past a small
+window having a fixed pointer. The use of a logarithmic scale enables the
+display and input of a value which can change by many orders of magnitude.
+
+Legends for the scale are created dynamically as it scrolls past the window,
+with one legend for each decade. The user may control this by means of a
+callback, for example to display units, e.g. `10nF`. A further callback
+enables the scale's color to change over its length or in response to other
+circumstances.
+
+The scale displays floats in range 1.0 <= V <= 10**decades where `decades` is a
+constructor arg. The user may readily scale these so that a control having a
+range of 1-10,000 controls a user value from 1e-6 to 1e-2 while displaying
+ticks labelled 1μs, 10μs, 100μs, 1ms, 10ms and 100ms.
+
+Constructor mandatory positional arguments:
+ 1. `location` 2-tuple defining position.
+ 2. `font` Font for labels.
+
+Keyword only arguments (all optional): 
+ * `decades=5` Defines the control's maximum value (i.e. `10**decades`).
+ * `value=1.0` Initial value for control. Will be constrained to
+ `1.0 <= value <= 10**decades` if outside this range.
+ * `height=60` Pass 0 for a minimum height based on the font height.
+ * `width=300`
+ * `border=2` Border width in pixels.
+ * `fgcolor=None` Foreground color. Defaults to system color.
+ * `bgcolor=None` Background color defaults to system background.
+ * `pointercolor=None` Color of pointer. Defaults to `.fgcolor`.
+ * `fontcolor=None` Color of legends. Default `WHITE`.
+ * `legendcb=None` Callback for populating scale legends (see below).
+ * `tickcb=None` Callback for setting tick colors (see below).
+ * `cb_end=dolittle` Callback function which will run when the user stops
+ touching the control. Default is a null function.
+ * `cbe_args=[]` A list/tuple of arguments for above callback.  The callback's
+ arguments are the `ScaleLog` instance, followed by any user supplied args.
+ * `cb_move=dolittle` Callback function which will run when the user moves the
+ scale or the value is changed programmatically. Default is a null function.
+ * `cbm_args=[]` A list/tuple of arguments for above callback. The callback's
+ arguments are the `ScaleLog` instance, followed by any user supplied args.
+
+Methods:
+ * `value=None` Set or get the current value. Always returns the current value.
+ A passed `float` is constrained to the range 1.0 <= V <= 10**decades and
+ becomes the control's current value. The `ScaleLog` is updated. Always returns
+ the control's current value. See note below on precision.
+ * `greyed_out` Optional Boolean argument `val` default `None`. If
+ `None` returns the current 'greyed out' status of the control. Otherwise
+ enables or disables it, showing it in its new state.
+ * `set_touch(itime=200, fmul=1.1, smul=1.01)` This method allows the behaviour
+ of  touch detection to be modified. The defaults are the values used if this
+ method is never called. The `itime` arg is the time (in ms) for which each
+ value change is displayed. The `fmul` arg affects the rate of movement when
+ touched near the ends of the control, `smul` when touched near to the centre.
+ The control's value is repeatedly multiplied by these values, or by their
+ reciprocal, while touch is maintained.
+
+### Touch algorithm
+
+A touch near either end of the control causes an accelerating change to the
+value. Thus a long touch can rapidly move the control with a short one giving
+smaller changes. A touch near to the centre of the control gives rise to a
+more gently accelerating change. This enables high precision adjustment.
+
+### Callbacks cb_move and cb_end 
+
+These receive an initial arg being the control instance followed by any user
+supplied args. They can be bound methods, typically of a `Screen` subclass.
+`cb_move` runs when the value changes but before the update is processed,
+enabling dynamic color change.
+
+### Callback legendcb
+
+The start of each decade is marked by a long "tick" with a user-definable text
+label. By default it will display a number corresponding to the value at that
+tick (of form `10**n` where `n` is an integer), but this can be overridden to
+display values such as "10MHz". The following is a simple example from the
+`scale_ctrl_test` demo:
+```python
+def legendcb(f):
+    if f < 999:
+        return '{:<1.0f}'.format(f)
+    return '{:<1.0f}K'.format(f/1000)
+```
+
+### Callback tickcb
+
+This callback enables the tick color to be changed dynamically. For example a
+scale might change from green to orange, then to red as it nears the extremes.
+The callback takes two args, being the value of the tick (of form `10**n` where
+`n` is an integer) and the default color. It must return a color. This example
+is taken from the `scale_ctrl_test` demo:
+```python
+def tickcb(f, c):
+    if f > 30000:
+        return RED
+    if f < 10:
+        return BLUE
+    return c
+```
+
+### Precision
+
+The precision with which values can be set by touch depends on the `smul` arg
+supplied to the `set_touch` method. The closer this is to unity the higher the
+precision, but the longer it will take to set a value.
 
 ###### [Jump to Contents](./GUI.md#contents)
 
